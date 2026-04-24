@@ -8,67 +8,63 @@ import cors from "cors";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-async function startServer() {
-  const app = express();
-  const PORT = 3000;
-  const CLOUDFRONT_BASE = "https://d1nt34i9nvab8r.cloudfront.net";
+const app = express();
+const CLOUDFRONT_BASE = "https://d1nt34i9nvab8r.cloudfront.net";
 
-  app.use(cors());
-  app.use(express.json());
+app.use(cors());
+app.use(express.json());
 
-  // Serve root assets directory
-  app.use("/assets", express.static(path.join(__dirname, "assets")));
+// Health check
+app.get("/api/health", (req, res) => {
+  res.json({ status: "ok", time: new Date().toISOString() });
+});
 
-  // Health check
-  app.get("/api/health", (req, res) => {
-    res.json({ status: "ok", time: new Date().toISOString() });
-  });
+// Proxy for Data
+app.get("/api/data/*", async (req, res) => {
+  const targetPath = req.params[0];
+  const targetUrl = `${CLOUDFRONT_BASE}/data/${targetPath}`;
+  
+  console.log(`[Proxy Data] ${req.method} ${req.url} -> ${targetUrl}`);
+  
+  try {
+    const response = await axios.get(targetUrl, {
+      responseType: "json",
+    });
+    res.json(response.data);
+  } catch (error: any) {
+    console.error(`[Proxy Data Error] ${targetUrl}:`, error.message);
+    const status = error.response?.status || 500;
+    res.status(status).send(error.message);
+  }
+});
 
-  // Proxy for Data
-  app.get("/api/data/*", async (req, res) => {
-    const targetPath = req.params[0];
-    const targetUrl = `${CLOUDFRONT_BASE}/data/${targetPath}`;
+// Proxy for Images
+app.get("/api/images/*", async (req, res) => {
+  const targetPath = req.params[0];
+  const targetUrl = `${CLOUDFRONT_BASE}/images/${targetPath}`;
+  
+  console.log(`[Proxy Images] ${req.method} ${req.url} -> ${targetUrl}`);
+
+  try {
+    const response = await axios.get(targetUrl, {
+      responseType: "arraybuffer",
+    });
     
-    console.log(`[Proxy Data] ${req.method} ${req.url} -> ${targetUrl}`);
-    
-    try {
-      const response = await axios.get(targetUrl, {
-        responseType: "json",
-      });
-      res.json(response.data);
-    } catch (error: any) {
-      console.error(`[Proxy Data Error] ${targetUrl}:`, error.message);
-      const status = error.response?.status || 500;
-      res.status(status).send(error.message);
+    const contentType = response.headers["content-type"];
+    if (typeof contentType === "string") {
+      res.setHeader("Content-Type", contentType);
     }
-  });
-
-  // Proxy for Images
-  app.get("/api/images/*", async (req, res) => {
-    const targetPath = req.params[0];
-    const targetUrl = `${CLOUDFRONT_BASE}/images/${targetPath}`;
     
-    console.log(`[Proxy Images] ${req.method} ${req.url} -> ${targetUrl}`);
+    res.send(response.data);
+  } catch (error: any) {
+    console.error(`[Proxy Images Error] ${targetUrl}:`, error.message);
+    const status = error.response?.status || 500;
+    res.status(status).send(error.message);
+  }
+});
 
-    try {
-      const response = await axios.get(targetUrl, {
-        responseType: "arraybuffer",
-      });
-      
-      const contentType = response.headers["content-type"];
-      if (typeof contentType === "string") {
-        res.setHeader("Content-Type", contentType);
-      }
-      
-      res.send(response.data);
-    } catch (error: any) {
-      console.error(`[Proxy Images Error] ${targetUrl}:`, error.message);
-      const status = error.response?.status || 500;
-      res.status(status).send(error.message);
-    }
-  });
-
-  // Vite integration
+// Vite integration
+async function setupVite() {
   if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({
       server: { middlewareMode: true },
@@ -82,10 +78,17 @@ async function startServer() {
       res.sendFile(path.join(distPath, "index.html"));
     });
   }
+}
 
-  app.listen(PORT, "0.0.0.0", () => {
-    console.log(`Server running on http://localhost:${PORT}`);
+// Start server if main module
+const isMain = import.meta.url === `file://${process.argv[1]}`;
+if (isMain || process.env.NODE_ENV !== "production") {
+  setupVite().then(() => {
+    const PORT = 3000;
+    app.listen(PORT, "0.0.0.0", () => {
+      console.log(`Server running on http://localhost:${PORT}`);
+    });
   });
 }
 
-startServer();
+export default app;
