@@ -44,11 +44,11 @@ function EvolutionNode({ id, shinyMode, onSelect, isCurrent }: EvolutionNodeProp
         onClick={() => onSelect(id)}
         className={`relative w-16 h-16 sm:w-20 sm:h-20 rounded-2xl flex items-center justify-center border transition-all shrink-0 p-2 ${
           isCurrent 
-            ? "bg-white dark:bg-white/10 border-ink/40 dark:border-paper/40 shadow-xl scale-110 z-10" 
-            : "bg-black/[0.02] dark:bg-white/[0.02] border-black/5 dark:border-white/5 hover:bg-black/[0.05] dark:hover:bg-white/[0.05]"
+            ? "bg-paper border-ink/40 shadow-xl scale-110 z-10" 
+            : "bg-ink/[0.02] border-line hover:bg-ink/[0.05]"
         }`}
       >
-        <div className="absolute top-1.5 left-2 text-[6px] font-mono opacity-40 font-bold tracking-tighter bg-paper dark:bg-ink px-1 rounded-sm">
+        <div className="absolute top-1.5 left-2 text-[6px] font-mono opacity-60 font-bold tracking-tighter bg-paper text-ink px-1 rounded-sm border border-line shadow-sm">
           #{String(dexId).padStart(4, "0")}
         </div>
         
@@ -63,7 +63,7 @@ function EvolutionNode({ id, shinyMode, onSelect, isCurrent }: EvolutionNodeProp
           />
         )}
       </button>
-      <span className="text-[8px] micro-label opacity-40 group-hover/node:opacity-100 transition-opacity text-center max-w-[70px] flex flex-col items-center">
+      <span className="text-[8px] micro-label group-hover/node:text-ink transition-all text-center max-w-[70px] flex flex-col items-center">
         <span className="break-words line-clamp-1">{pokemonName}</span>
         {form?.["special form"] && (
           <span className="opacity-50 text-[7px] truncate font-normal">({form["special form"]})</span>

@@ -6,26 +6,33 @@
   --font-display: "Outfit", var(--font-sans);
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
 
-  --color-paper: #fcfcf9;
-  --color-ink: #121212;
+  --color-paper: var(--paper);
+  --color-ink: var(--ink);
   --color-clay: #717171;
-  --color-line: rgba(18, 18, 18, 0.08);
-  --color-line-dark: rgba(255, 255, 255, 0.08);
+  --color-line: var(--line);
 }
 
 @layer base {
-  body {
-    @apply bg-paper text-ink selection:bg-ink selection:text-paper antialiased font-sans min-h-screen transition-colors duration-500;
+  :root {
+    --paper: #fcfcf9;
+    --ink: #121212;
+    --line: rgba(18, 18, 18, 0.08);
   }
 
-  .dark body {
-    @apply bg-ink text-paper;
+  .dark {
+    --paper: #121212;
+    --ink: #fcfcf9;
+    --line: rgba(255, 255, 255, 0.15);
+  }
+
+  body {
+    @apply bg-paper text-ink selection:bg-ink selection:text-paper antialiased font-sans min-h-screen transition-colors duration-500;
   }
 }
 
 @layer utilities {
   .museum-panel {
-    @apply bg-white dark:bg-white/[0.02] border border-line dark:border-line-dark;
+    @apply bg-paper border border-line;
   }
   
   .micro-label {
@@ -33,11 +40,11 @@
   }
 
   .museum-grid {
-    @apply border-l border-t border-line dark:border-line-dark;
+    @apply border-l border-t border-line;
   }
   
   .museum-cell {
-    @apply border-r border-b border-line dark:border-line-dark;
+    @apply border-r border-b border-line;
   }
 }
 

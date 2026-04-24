@@ -34,6 +34,8 @@ export default function PokemonCard({ pokemon, targetFormIndex = 0, shinyMode, o
   const targetForm = allForms[targetFormIndex] || allForms[0];
 
   const pokemonName = targetForm?.name || "Specimen";
+  const specialForm = targetForm?.["special form"];
+  const displayTitle = specialForm ? `${pokemonName} (${specialForm})` : pokemonName;
 
   const gender = "m"; // Default to male for grid
   const imageKey = `image asset ${gender}${shinyMode ? " shiny" : ""}` as keyof PokemonForm;
@@ -47,15 +49,15 @@ export default function PokemonCard({ pokemon, targetFormIndex = 0, shinyMode, o
     <motion.button
       ref={ref}
       onClick={onClick}
-      className="group relative aspect-[5/3] w-full flex items-center p-4 bg-transparent transition-all border border-transparent hover:border-ink dark:hover:border-paper cursor-pointer overflow-hidden z-10"
+      className="group relative aspect-[5/3] w-full flex items-center p-4 bg-transparent transition-all ring-2 ring-transparent hover:ring-ink cursor-pointer overflow-hidden z-10"
     >
       {/* Name - Background subtle text */}
       <div className="absolute left-4 bottom-4 micro-label opacity-5 group-hover:opacity-20 transition-all pointer-events-none">
-        {pokemonName}
+        {displayTitle}
       </div>
 
       {/* Dex ID - Top Right */}
-      <div className="absolute top-3 right-4 micro-label opacity-30 group-hover:opacity-100 group-hover:text-ink dark:group-hover:text-paper transition-all">
+      <div className="absolute top-3 right-4 micro-label opacity-40 group-hover:opacity-100 group-hover:scale-110 text-ink transition-all origin-right">
         {String(pokemon.id).padStart(4, "0")}
       </div>
       
@@ -65,7 +67,7 @@ export default function PokemonCard({ pokemon, targetFormIndex = 0, shinyMode, o
           <>
             {loading && (
               <div className="absolute inset-0 flex items-center justify-center">
-                <div className="w-4 h-4 border border-ink/10 dark:border-paper/10 border-t-ink dark:border-t-paper rounded-full animate-spin" />
+                <div className="w-4 h-4 border border-ink/10 border-t-ink rounded-full animate-spin" />
               </div>
             )}
             <img
@@ -78,13 +80,14 @@ export default function PokemonCard({ pokemon, targetFormIndex = 0, shinyMode, o
         ) : (
           <div className="flex flex-col items-center justify-center opacity-40 group-hover:opacity-80 transition-opacity">
             <span className="font-display text-sm font-black italic break-words text-center px-2">{pokemonName}</span>
+            {specialForm && <span className="text-[8px] micro-label opacity-60">{specialForm}</span>}
             <span className="text-[7px] micro-label tracking-tighter mt-1 opacity-40">Archive Incomplete</span>
           </div>
         )}
       </div>
 
       {/* Hover Background - Subtle highlight */}
-      <div className="absolute inset-0 bg-ink/[0.02] dark:bg-paper/[0.02] opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
+      <div className="absolute inset-0 bg-ink/[0.02] opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
     </motion.button>
   );
 }

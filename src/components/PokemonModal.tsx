@@ -166,13 +166,13 @@ export default function PokemonModal({ initialId, initialFormIndex = 0, onClose,
         <>
           <button 
             onClick={(e) => { e.stopPropagation(); handlePrev(); }}
-            className="fixed left-4 md:left-8 top-1/2 -translate-y-1/2 p-4 text-paper dark:text-ink bg-ink/10 dark:bg-paper/10 hover:bg-ink/20 dark:hover:bg-paper/20 rounded-full transition-all z-50 hidden md:block"
+            className="fixed left-4 md:left-8 top-1/2 -translate-y-1/2 p-4 text-paper bg-white/10 hover:bg-white/20 rounded-full transition-all z-50 hidden md:block"
           >
             <ChevronLeft size={32} strokeWidth={1.5} />
           </button>
           <button 
             onClick={(e) => { e.stopPropagation(); handleNext(); }}
-            className="fixed right-4 md:right-8 top-1/2 -translate-y-1/2 p-4 text-paper dark:text-ink bg-ink/10 dark:bg-paper/10 hover:bg-ink/20 dark:hover:bg-paper/20 rounded-full transition-all z-50 hidden md:block"
+            className="fixed right-4 md:right-8 top-1/2 -translate-y-1/2 p-4 text-paper bg-white/10 hover:bg-white/20 rounded-full transition-all z-50 hidden md:block"
           >
             <ChevronRight size={32} strokeWidth={1.5} />
           </button>
@@ -190,11 +190,11 @@ export default function PokemonModal({ initialId, initialFormIndex = 0, onClose,
         dragConstraints={{ left: 0, right: 0 }}
         dragElastic={0.2}
         onDragEnd={onDragEnd}
-        className="bg-paper dark:bg-ink w-full max-w-7xl h-full md:h-[90vh] shadow-2xl overflow-hidden relative flex flex-col md:flex-row border border-line dark:border-line-dark z-10"
+        className="bg-paper w-full max-w-7xl h-full md:h-[90vh] shadow-2xl overflow-hidden relative flex flex-col md:flex-row border border-line z-10 text-ink"
       >
         {/* Left Side: Large Exhibit Artwork */}
         <div 
-          className="md:w-7/12 h-[50vh] md:h-full flex flex-col relative border-b md:border-b-0 md:border-r border-line dark:border-line-dark shiny-gradient overflow-hidden bg-white dark:bg-ink"
+          className="md:w-7/12 h-[50vh] md:h-full flex flex-col relative border-b md:border-b-0 md:border-r border-line shiny-gradient overflow-hidden bg-white dark:bg-black/20"
         >
           {/* Top Metadata Rail */}
           <div className="absolute top-8 left-8 right-8 flex justify-between items-start z-10 pointer-events-none">
@@ -208,13 +208,13 @@ export default function PokemonModal({ initialId, initialFormIndex = 0, onClose,
               <div className="flex gap-4 pointer-events-auto">
                 <button 
                   onClick={() => setGender("m")}
-                  className={`micro-label transition-all flex items-center gap-2 ${gender === "m" ? "text-ink dark:text-paper" : "opacity-20"}`}
+                  className={`micro-label transition-all flex items-center gap-2 ${gender === "m" ? "text-ink" : "opacity-20"}`}
                 >
                   <Mars size={12} /> Male
                 </button>
                 <button 
                   onClick={() => setGender("f")}
-                  className={`micro-label transition-all flex items-center gap-2 ${gender === "f" ? "text-ink dark:text-paper" : "opacity-20"}`}
+                  className={`micro-label transition-all flex items-center gap-2 ${gender === "f" ? "text-ink" : "opacity-20"}`}
                 >
                   <Venus size={12} /> Female
                 </button>
@@ -225,7 +225,7 @@ export default function PokemonModal({ initialId, initialFormIndex = 0, onClose,
           <div className="flex-1 flex items-center justify-center p-12 relative">
             {imgLoading && !imgError && (
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                <div className="w-10 h-10 border border-ink/5 dark:border-paper/5 border-t-ink dark:border-t-paper rounded-full animate-spin" />
+                <div className="w-10 h-10 border border-ink/5 border-t-ink rounded-full animate-spin" />
               </div>
             )}
             
@@ -263,7 +263,7 @@ export default function PokemonModal({ initialId, initialFormIndex = 0, onClose,
                 <button 
                   key={i}
                   onClick={() => handleFormSelect(i)}
-                  className={`w-1 h-8 transition-all ${i === currentFormIndex ? "bg-ink dark:bg-paper scale-x-125" : "bg-line dark:border-line-dark"}`} 
+                  className={`w-1 h-8 transition-all ${i === currentFormIndex ? "bg-ink scale-x-125" : "bg-line"}`} 
                 />
               ))}
             </div>
@@ -274,7 +274,7 @@ export default function PokemonModal({ initialId, initialFormIndex = 0, onClose,
         <div className="md:w-5/12 flex flex-col p-12 lg:p-16 overflow-y-auto custom-scrollbar relative">
           <button 
             onClick={onClose}
-            className="absolute top-8 right-8 micro-label px-3 py-1 hover:bg-ink dark:hover:bg-paper hover:text-paper dark:hover:text-ink transition-all border border-line dark:border-line-dark"
+            className="absolute top-8 right-8 micro-label px-3 py-1 hover:bg-ink hover:text-paper transition-all border border-line"
           >
             Close Archive
           </button>
@@ -283,31 +283,31 @@ export default function PokemonModal({ initialId, initialFormIndex = 0, onClose,
             <span className="micro-label mb-4 block">Classification</span>
             <div className="flex flex-col gap-4">
               <div className="flex flex-col">
-                <h2 className="text-6xl lg:text-7xl font-display font-black tracking-tighter text-ink dark:text-paper leading-none">
+                <h2 className="text-6xl lg:text-7xl font-display font-black tracking-tighter leading-none">
                   {form.name}
                 </h2>
                 {form["special form"] && (
                   <span className="micro-label opacity-40 mt-2">{form["special form"]}</span>
                 )}
               </div>
-              <div className="flex flex-wrap gap-3">
+              <div className="flex wrap gap-3">
                 {form.type.map((t) => (
                   <span 
                     key={t}
-                    className="micro-label px-3 py-1 border border-line dark:border-line-dark"
+                    className="micro-label px-3 py-1 border border-line"
                   >
                     {t}
                   </span>
                 ))}
               </div>
             </div>
-            <div className="mt-8 pt-8 border-t border-line dark:border-line-dark">
+            <div className="mt-8 pt-8 border-t border-line">
                <p className="font-display font-medium text-lg leading-snug">{form.category} Pokémon</p>
             </div>
           </header>
 
           <div className="space-y-16">
-            <section className="grid grid-cols-2 gap-12 border-b border-line dark:border-line-dark pb-16">
+            <section className="grid grid-cols-2 gap-12 border-b border-line pb-16">
               <div className="space-y-2">
                 <span className="micro-label">Height</span>
                 <p className="font-display font-bold text-3xl tracking-tight">{form.height / 100}<span className="text-sm ml-1 opacity-20">M</span></p>
@@ -330,14 +330,14 @@ export default function PokemonModal({ initialId, initialFormIndex = 0, onClose,
               </div>
             </section>
 
-            <section className="space-y-4 pt-12 border-t border-line dark:border-line-dark">
+            <section className="space-y-4 pt-12 border-t border-line">
               <span className="micro-label">Field observations</span>
-              <p className="text-sm font-medium leading-relaxed italic opacity-60">
+              <p className="text-sm font-medium leading-relaxed italic opacity-80">
                 "{form.entry}"
               </p>
             </section>
 
-            <section className="space-y-8 pt-12 border-t border-line dark:border-line-dark">
+            <section className="space-y-8 pt-12 border-t border-line">
               <span className="micro-label">Evolution Line</span>
               <EvolutionChain 
                 indexData={indexData} 

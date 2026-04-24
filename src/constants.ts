@@ -36,8 +36,6 @@ export const TYPE_COLORS: Record<PokemonType, string> = {
   Dark: "#705746",
   Steel: "#B7B7CE",
   Fairy: "#D685AD",
-  Stellar: "#40B5A5",
-  Unknown: "#68A090",
 };
 
 export const TYPE_LIST: PokemonType[] = Object.keys(TYPE_COLORS) as PokemonType[];

@@ -54,7 +54,7 @@ export interface PokemonDetail {
 export type PokemonType = 
   | "Normal" | "Fire" | "Water" | "Grass" | "Electric" | "Ice" 
   | "Fighting" | "Poison" | "Ground" | "Flying" | "Psychic" | "Bug" 
-  | "Rock" | "Ghost" | "Dragon" | "Dark" | "Steel" | "Fairy" | "Stellar" | "Unknown";
+  | "Rock" | "Ghost" | "Dragon" | "Dark" | "Steel" | "Fairy";
 
 export interface RegionInfo {
   name: string;

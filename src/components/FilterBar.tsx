@@ -85,7 +85,7 @@ export default function FilterBar({
           onChange={(e) => setSelectedRegion(e.target.value)}
           className="bg-white dark:bg-white/5 border border-black/5 dark:border-white/5 px-4 py-2 rounded-xl font-display text-sm focus:outline-none focus:ring-2 focus:ring-poke-red/20"
         >
-          <option value="All Regions">All Regions</option>
+          <option value="All">All</option>
           {REGIONS.map((r) => (
             <option key={r.name} value={r.name}>
               {r.name}
@@ -106,10 +106,10 @@ export default function FilterBar({
           ))}
         </select>
         
-        {(selectedRegion !== "All Regions" || selectedType !== "All" || searchQuery) && (
+        {(selectedRegion !== "All" || selectedType !== "All" || searchQuery) && (
           <button 
             onClick={() => {
-              setSelectedRegion("All Regions");
+              setSelectedRegion("All");
               setSelectedType("All");
               setSearchQuery("");
             }}
