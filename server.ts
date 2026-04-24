@@ -1,11 +1,7 @@
 import express from "express";
 import path from "path";
-import { fileURLToPath } from "url";
 import axios from "axios";
 import cors from "cors";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 const app = express();
 const CLOUDFRONT_BASE = "https://d1nt34i9nvab8r.cloudfront.net";
@@ -23,8 +19,6 @@ app.get("/api/data/*", async (req, res) => {
   const targetPath = req.params[0];
   const targetUrl = `${CLOUDFRONT_BASE}/data/${targetPath}`;
   
-  console.log(`[Proxy Data] ${req.method} ${req.url} -> ${targetUrl}`);
-  
   try {
     const response = await axios.get(targetUrl, {
       responseType: "json",
@@ -32,18 +26,12 @@ app.get("/api/data/*", async (req, res) => {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
         "Accept": "application/json"
       },
-      timeout: 10000 // 10s timeout
+      timeout: 10000
     });
     res.json(response.data);
   } catch (error: any) {
-    console.error(`[Proxy Data Error] ${targetUrl}:`, error.message);
     const status = error.response?.status || 500;
-    const errorData = error.response?.data || error.message;
-    res.status(status).json({
-      error: "Proxy request failed",
-      details: typeof errorData === 'string' ? errorData : "Upstream error",
-      url: targetUrl
-    });
+    res.status(status).json({ error: "Proxy request failed", message: error.message });
   }
 });
 
@@ -52,8 +40,6 @@ app.get("/api/images/*", async (req, res) => {
   const targetPath = req.params[0];
   const targetUrl = `${CLOUDFRONT_BASE}/images/${targetPath}`;
   
-  console.log(`[Proxy Images] ${req.method} ${req.url} -> ${targetUrl}`);
-
   try {
     const response = await axios.get(targetUrl, {
       responseType: "arraybuffer",
@@ -67,12 +53,9 @@ app.get("/api/images/*", async (req, res) => {
     if (typeof contentType === "string") {
       res.setHeader("Content-Type", contentType);
     }
-    
-    // Explicitly allow caching for images
     res.setHeader("Cache-Control", "public, max-age=86400");
     res.send(response.data);
   } catch (error: any) {
-    console.error(`[Proxy Images Error] ${targetUrl}:`, error.message);
     const status = error.response?.status || 500;
     res.status(status).send(error.message);
   }

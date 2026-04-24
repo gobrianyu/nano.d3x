@@ -5,7 +5,7 @@
 
 import { useState, useEffect, useMemo, useRef } from "react";
 import { PokemonDetail, PokemonIndexItem, PokemonType } from "./types";
-import { BASE_DATA_URL, REGIONS, TYPE_LIST } from "./constants";
+import { BASE_DATA_URL, REGIONS, TYPE_LIST, CLOUDFRONT_ASSETS_URL } from "./constants";
 import PokemonCard from "./components/PokemonCard";
 import PokemonModal from "./components/PokemonModal";
 import FilterDropdown from "./components/FilterDropdown";
@@ -244,7 +244,7 @@ export default function App() {
                     <div className="flex items-center gap-2">
                       {option !== "All" && (
                         <img 
-                          src={`/assets/type-icons/${option.toLowerCase()}-type-icon.png`} 
+                          src={`${CLOUDFRONT_ASSETS_URL}/type-icons/${option.toLowerCase()}-type-icon.png`} 
                           alt={option}
                           className="w-4 h-4 object-contain"
                           onError={(e) => (e.currentTarget.style.display = 'none')}
@@ -293,7 +293,7 @@ export default function App() {
                         <div className="flex items-center gap-2">
                           {activeFilter === "type" && option !== "All" && (
                             <img 
-                              src={`/assets/type-icons/${option.toLowerCase()}-type-icon.png`} 
+                              src={`${CLOUDFRONT_ASSETS_URL}/type-icons/${option.toLowerCase()}-type-icon.png`} 
                               alt={option}
                               className="w-4 h-4 object-contain"
                               onError={(e) => (e.currentTarget.style.display = 'none')}

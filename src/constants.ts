@@ -2,6 +2,7 @@ import { RegionInfo, PokemonType } from "./types";
 
 export const BASE_DATA_URL = "/api/data";
 export const BASE_IMAGE_URL = "/api/images";
+export const CLOUDFRONT_ASSETS_URL = "https://d1nt34i9nvab8r.cloudfront.net";
 
 export const REGIONS: RegionInfo[] = [
   { name: "Kanto", count: 151, startId: 1, endId: 151 },
