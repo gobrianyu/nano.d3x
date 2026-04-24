@@ -1,5 +1,4 @@
 import express from "express";
-import { createServer as createViteServer } from "vite";
 import path from "path";
 import { fileURLToPath } from "url";
 import axios from "axios";
@@ -29,6 +28,9 @@ app.get("/api/data/*", async (req, res) => {
   try {
     const response = await axios.get(targetUrl, {
       responseType: "json",
+      headers: {
+        "User-Agent": "Mozilla/5.0 (compatible; NanoD3x/1.0)"
+      }
     });
     res.json(response.data);
   } catch (error: any) {
@@ -48,6 +50,9 @@ app.get("/api/images/*", async (req, res) => {
   try {
     const response = await axios.get(targetUrl, {
       responseType: "arraybuffer",
+      headers: {
+        "User-Agent": "Mozilla/5.0 (compatible; NanoD3x/1.0)"
+      }
     });
     
     const contentType = response.headers["content-type"];
@@ -66,15 +71,19 @@ app.get("/api/images/*", async (req, res) => {
 // Vite integration
 async function setupVite() {
   if (process.env.NODE_ENV !== "production") {
+    const { createServer: createViteServer } = await import("vite");
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: "spa",
     });
     app.use(vite.middlewares);
   } else {
+    // Production: Serve static files from dist
     const distPath = path.join(process.cwd(), "dist");
     app.use(express.static(distPath));
     app.get("*", (req, res) => {
+      // Avoid intercepting API routes that might have missed the markers above
+      if (req.path.startsWith("/api/")) return res.status(404).send("API route not found");
       res.sendFile(path.join(distPath, "index.html"));
     });
   }
