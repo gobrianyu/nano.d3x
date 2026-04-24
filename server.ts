@@ -16,6 +16,9 @@ async function startServer() {
   app.use(cors());
   app.use(express.json());
 
+  // Serve root assets directory
+  app.use("/assets", express.static(path.join(__dirname, "assets")));
+
   // Health check
   app.get("/api/health", (req, res) => {
     res.json({ status: "ok", time: new Date().toISOString() });
