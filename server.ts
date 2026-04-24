@@ -29,14 +29,21 @@ app.get("/api/data/*", async (req, res) => {
     const response = await axios.get(targetUrl, {
       responseType: "json",
       headers: {
-        "User-Agent": "Mozilla/5.0 (compatible; NanoD3x/1.0)"
-      }
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Accept": "application/json"
+      },
+      timeout: 10000 // 10s timeout
     });
     res.json(response.data);
   } catch (error: any) {
     console.error(`[Proxy Data Error] ${targetUrl}:`, error.message);
     const status = error.response?.status || 500;
-    res.status(status).send(error.message);
+    const errorData = error.response?.data || error.message;
+    res.status(status).json({
+      error: "Proxy request failed",
+      details: typeof errorData === 'string' ? errorData : "Upstream error",
+      url: targetUrl
+    });
   }
 });
 
@@ -51,8 +58,9 @@ app.get("/api/images/*", async (req, res) => {
     const response = await axios.get(targetUrl, {
       responseType: "arraybuffer",
       headers: {
-        "User-Agent": "Mozilla/5.0 (compatible; NanoD3x/1.0)"
-      }
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+      },
+      timeout: 15000
     });
     
     const contentType = response.headers["content-type"];
@@ -60,6 +68,8 @@ app.get("/api/images/*", async (req, res) => {
       res.setHeader("Content-Type", contentType);
     }
     
+    // Explicitly allow caching for images
+    res.setHeader("Cache-Control", "public, max-age=86400");
     res.send(response.data);
   } catch (error: any) {
     console.error(`[Proxy Images Error] ${targetUrl}:`, error.message);

@@ -1,13 +1,13 @@
 import { motion, AnimatePresence } from "motion/react";
 import { ChevronDown } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 
 interface FilterDropdownProps<T> {
   label: string;
   value: T;
   options: T[];
   onChange: (value: T) => void;
-  renderOption?: (option: T) => React.ReactNode;
+  renderOption?: (option: T) => ReactNode;
   activeFilter: string | null;
   setActiveFilter: (filter: string | null) => void;
   filterId: string;
