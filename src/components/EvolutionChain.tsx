@@ -53,7 +53,7 @@ function EvolutionNode({ id, shinyMode, onSelect, isCurrent }: EvolutionNodeProp
         </div>
         
         {imgError ? (
-          <ImageOff size={12} className="opacity-20" />
+          <span className="text-xl font-display font-black opacity-10">?</span>
         ) : (
           <img
             src={cachedImageUrl || ""}

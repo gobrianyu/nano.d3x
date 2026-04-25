@@ -215,11 +215,10 @@ export default function PokemonModal({ initialId, initialFormIndex = 0, onClose,
           </button>
         </div>
 
-        {/* Inner Scrollable Container for Portrait / Structural Wrapper for Landscape */}
-        <div className={`flex flex-1 ${isPortrait ? "flex-col overflow-y-auto custom-scrollbar" : "flex-row overflow-hidden"}`}>
+          <div className={`flex flex-1 ${isPortrait ? "flex-col overflow-y-auto custom-scrollbar" : "flex-row overflow-hidden"}`}>
           {/* Classification Info - Above Image in Mobile */}
           {isPortrait && (
-            <div className="px-8 pt-6 pb-6 space-y-3">
+            <div className="px-8 pt-8 pb-8 space-y-4">
                <div className="flex items-center gap-3">
                 <span className="micro-label opacity-40">Dex ID</span>
                 <span className="font-display text-xl font-black tracking-tighter">
@@ -227,7 +226,7 @@ export default function PokemonModal({ initialId, initialFormIndex = 0, onClose,
                 </span>
               </div>
               <div className="flex items-baseline gap-2 overflow-visible">
-                 <h2 className="font-display font-black tracking-tighter leading-[1.1] text-4xl pb-1 whitespace-nowrap">
+                 <h2 className="font-display font-black tracking-tighter leading-[1] text-4xl pb-1 whitespace-nowrap">
                   {form.name}
                 </h2>
               </div>
@@ -321,63 +320,64 @@ export default function PokemonModal({ initialId, initialFormIndex = 0, onClose,
           )}
         </div>
 
-        <div className={`flex flex-col custom-scrollbar relative ${isPortrait ? "w-full p-8" : "md:w-5/12 p-12 lg:p-14 overflow-y-auto"}`}>
+        <div className={`flex flex-col custom-scrollbar relative ${isPortrait ? "w-full p-10" : "md:w-5/12 p-12 lg:p-14 overflow-y-auto"}`}>
           {!isPortrait && (
-            <header className="mb-8">
-              <span className="micro-label mb-2 block opacity-40">Classification</span>
-              <div className="flex flex-col gap-3">
+            <header className="mb-10">
+              <div className="flex flex-col gap-4">
                 <div className="flex flex-col overflow-visible max-w-[90%]">
-                  <h2 className="font-display font-black tracking-tighter leading-[1] text-5xl lg:text-6xl pb-2 whitespace-nowrap">
+                  <h2 className="font-display font-black tracking-tighter leading-[1] text-6xl lg:text-7xl pb-4 whitespace-nowrap">
                     {form.name}
                   </h2>
                   {form["special form"] && (
-                    <span className="micro-label opacity-40 mt-1 italic">Variant: {form["special form"]}</span>
+                    <span className="micro-label opacity-40 italic">Variant: {form["special form"]}</span>
                   )}
                 </div>
                 <div className="flex wrap gap-2">
                   {form.type.map((t) => (
-                    <span key={t} className="micro-label px-3 py-1 border border-line">{t}</span>
+                    <span key={t} className="micro-label px-4 py-1.5 border border-line">{t}</span>
                   ))}
                 </div>
               </div>
             </header>
           )}
 
-          <section className="mb-8 space-y-2">
-            <p className="micro-label font-bold text-ink uppercase tracking-[0.2em]">{form.category} Pokémon</p>
-            <span className="micro-label opacity-40 block">Observation Entry</span>
-            <p className="text-sm font-medium leading-relaxed italic border-l-2 border-line pl-4">
-              "{form.entry}"
-            </p>
+          <section className="mb-10 space-y-3">
+            <p className="font-display text-lg font-black text-ink uppercase tracking-[0.25em]">{form.category} Pokémon</p>
+            <div className="space-y-4">
+              <span className="micro-label opacity-30 block">D3x Entry</span>
+              <p className="text-sm font-medium leading-relaxed italic border-l-[3px] border-line pl-6 py-1">
+                "{form.entry}"
+              </p>
+            </div>
           </section>
 
-          <div className="space-y-12">
-            <section className="grid grid-cols-2 gap-8 border-b border-line pb-8">
-              <div className="space-y-1">
+          <div className="space-y-10">
+            <section className="grid grid-cols-2 gap-10 border-b border-line pb-10">
+              <div className="space-y-2">
                 <span className="micro-label opacity-40">Height</span>
-                <p className="font-display font-bold text-2xl tracking-tighter">{form.height / 100}<span className="text-xs ml-1 opacity-40">M</span></p>
+                <p className="font-display font-bold text-3xl tracking-tighter">{form.height / 100}<span className="text-xs ml-1 opacity-40">M</span></p>
               </div>
-              <div className="space-y-1">
+              <div className="space-y-2">
                 <span className="micro-label opacity-40">Weight</span>
-                <p className="font-display font-bold text-2xl tracking-tighter">{form.weight}<span className="text-xs ml-1 opacity-40">KG</span></p>
+                <p className="font-display font-bold text-3xl tracking-tighter">{form.weight}<span className="text-xs ml-1 opacity-40">KG</span></p>
               </div>
             </section>
 
-            <section className="space-y-4">
+            <section className="space-y-6">
               <span className="micro-label opacity-40">Base Stats</span>
               <div className="space-y-3">
-                <StatBar label="HP" value={stats.hp} color="currentColor" />
-                <StatBar label="ATK" value={stats.atk} color="currentColor" />
-                <StatBar label="DEF" value={stats.def} color="currentColor" />
-                <StatBar label="SP.ATK" value={stats["sp.atk"]} color="currentColor" />
-                <StatBar label="SP.DEF" value={stats["sp.def"]} color="currentColor" />
-                <StatBar label="SPEED" value={stats.speed} color="currentColor" />
+                <StatBar label="HP" value={stats.hp} />
+                <StatBar label="ATK" value={stats.atk} />
+                <StatBar label="DEF" value={stats.def} />
+                <StatBar label="SP.ATK" value={stats["sp.atk"]} />
+                <StatBar label="SP.DEF" value={stats["sp.def"]} />
+                <StatBar label="SPEED" value={stats.speed} />
               </div>
             </section>
 
-            <section className="space-y-4 pt-8 border-t border-line overflow-hidden">
-              <span className="micro-label opacity-40">Evolutionary Sequence</span>
-              <div className="flex justify-center w-full">
+            <section className="space-y-6 pt-10 border-t border-line overflow-hidden">
+              <span className="micro-label opacity-40">Evolutionary Line</span>
+              <div className="flex justify-center w-full py-4">
                 <EvolutionChain 
                   indexData={indexData} 
                   shinyMode={shinyMode} 
