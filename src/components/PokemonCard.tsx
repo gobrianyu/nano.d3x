@@ -33,7 +33,7 @@ export default function PokemonCard({ pokemon, targetFormIndex = 0, shinyMode, o
   const allForms = detail ? [...detail.forms, ...detail["gimmick forms"]] : [];
   const targetForm = allForms[targetFormIndex] || allForms[0];
 
-  const pokemonName = targetForm?.name || "Specimen";
+  const pokemonName = targetForm?.name || "???";
   const specialForm = targetForm?.["special form"];
   const displayTitle = specialForm ? `${pokemonName} (${specialForm})` : pokemonName;
 

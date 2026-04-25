@@ -30,7 +30,7 @@ function EvolutionNode({ id, shinyMode, onSelect, isCurrent }: EvolutionNodeProp
 
   const allForms = [...(detail?.forms || []), ...(detail?.["gimmick forms"] || [])];
   const form = allForms[formIndex];
-  const pokemonName = form?.name || "Specimen";
+  const pokemonName = form?.name || "???";
 
   const gender = "m";
   const imageKey = `image asset ${gender}${shinyMode ? " shiny" : ""}` as keyof PokemonForm;
@@ -42,28 +42,28 @@ function EvolutionNode({ id, shinyMode, onSelect, isCurrent }: EvolutionNodeProp
     <div className="flex flex-col items-center gap-2 group/node">
       <button
         onClick={() => onSelect(id)}
-        className={`relative w-16 h-16 sm:w-20 sm:h-20 rounded-2xl flex items-center justify-center border transition-all shrink-0 p-2 ${
+        className={`relative w-12 h-12 sm:w-16 sm:h-16 rounded-none flex items-center justify-center border transition-all shrink-0 p-1.5 ${
           isCurrent 
-            ? "bg-paper border-ink/40 shadow-xl scale-110 z-10" 
+            ? "bg-paper border-ink scale-110 z-10" 
             : "bg-ink/[0.02] border-line hover:bg-ink/[0.05]"
         }`}
       >
-        <div className="absolute top-1.5 left-2 text-[6px] font-mono opacity-60 font-bold tracking-tighter bg-paper text-ink px-1 rounded-sm border border-line shadow-sm">
+        <div className="absolute top-0.5 left-0.5 text-[5px] font-mono opacity-60 font-bold tracking-tighter bg-paper text-ink px-0.5 border border-line">
           #{String(dexId).padStart(4, "0")}
         </div>
         
         {imgError ? (
-          <ImageOff size={16} className="opacity-20" />
+          <ImageOff size={12} className="opacity-20" />
         ) : (
           <img
             src={cachedImageUrl || ""}
             alt={pokemonName}
             referrerPolicy="no-referrer"
-            className={`w-12 h-12 sm:w-14 sm:h-14 object-contain transition-all duration-300 ${imgLoading || isLoading ? "opacity-0" : "opacity-100 group-hover/node:scale-110"}`}
+            className={`w-10 h-10 sm:w-12 sm:h-12 object-contain transition-all duration-300 ${imgLoading || isLoading ? "opacity-0" : "opacity-100 group-hover/node:scale-110"}`}
           />
         )}
       </button>
-      <span className="text-[8px] micro-label group-hover/node:text-ink transition-all text-center max-w-[70px] flex flex-col items-center">
+      <span className="text-[7px] micro-label group-hover/node:text-ink transition-all text-center max-w-[60px] flex flex-col items-center">
         <span className="break-words line-clamp-1">{pokemonName}</span>
         {form?.["special form"] && (
           <span className="opacity-50 text-[7px] truncate font-normal">({form["special form"]})</span>
@@ -178,8 +178,8 @@ export default function EvolutionChain({ shinyMode, onSelect, currentId }: Evolu
   };
 
   return (
-    <div className="overflow-x-auto py-8 px-4 custom-scrollbar">
-      <div className="flex items-center justify-start min-w-max">
+    <div className="py-2 w-full max-w-full overflow-hidden">
+      <div className="flex items-center justify-center w-full px-2">
         {renderBranch(tree)}
       </div>
     </div>

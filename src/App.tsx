@@ -148,11 +148,11 @@ export default function App() {
               nano.d3x
             </h1>
             <p className="text-sm md:text-base font-medium tracking-wider opacity-60 ml-1">
-              A Pokédex by nano.m0n
+              A Pokédex by <a href="https://www.instagram.com/nano.m0n" target="_blank" rel="noopener noreferrer" style={{ color: "inherit", textDecoration: "underline", textUnderlineOffset: "2px"}}>@nano.m0n</a>
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-6 pl-1 micro-label">
-            <span>Portfolio 002</span>
+            <span>Art Portfolio 002</span>
             <span className="opacity-20">/</span>
             <span className="text-ink">{indexData.length} Registered</span>
           </div>
