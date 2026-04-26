@@ -39,16 +39,21 @@ export default function PokemonModal({ initialId, initialFormIndex = 0, onClose,
     return idx !== -1 ? idx : 0;
   });
 
+  const [direction, setDirection] = useState(0); // -1 for left, 1 for right
+
   const currentItem = gallery[currentIndex];
   const id = currentItem?.id;
   const currentFormIndex = currentItem?.matchedFormIndex ?? 0;
 
   const [gender, setGender] = useState<"m" | "f">("m");
+  const [hoveredFormIndex, setHoveredFormIndex] = useState<number | null>(null);
   const [isPortrait, setIsPortrait] = useState(window.innerHeight > window.innerWidth);
+  const [isNarrow, setIsNarrow] = useState(window.innerWidth < 1280);
 
   useEffect(() => {
     const handleResize = () => {
       setIsPortrait(window.innerHeight > window.innerWidth);
+      setIsNarrow(window.innerWidth < 1280);
     };
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
@@ -74,8 +79,14 @@ export default function PokemonModal({ initialId, initialFormIndex = 0, onClose,
   const accentColor = TYPE_COLORS[mainType] || "#888";
 
   // Navigation logic
-  const handleNext = () => setCurrentIndex(prev => (prev + 1) % gallery.length);
-  const handlePrev = () => setCurrentIndex(prev => (prev - 1 + gallery.length) % gallery.length);
+  const handleNext = () => {
+    setDirection(1);
+    setCurrentIndex(prev => (prev + 1) % gallery.length);
+  };
+  const handlePrev = () => {
+    setDirection(-1);
+    setCurrentIndex(prev => (prev - 1 + gallery.length) % gallery.length);
+  };
 
   const handleFormSelect = (idx: number) => {
     setGallery(prev => prev.map((item, i) => i === currentIndex ? { ...item, matchedFormIndex: idx } : item));
@@ -170,39 +181,45 @@ export default function PokemonModal({ initialId, initialFormIndex = 0, onClose,
         className="absolute inset-0 bg-neutral-900/60 backdrop-blur-[2px]" 
       />
 
-      {/* Gallery Navigation - Buttons in Margins */}
-      {gallery.length > 1 && (
-        <>
+      {/* Gallery Navigation - Wide Screen Margins */}
+      {gallery.length > 1 && !isNarrow && (
+        <div className="fixed inset-x-0 top-1/2 -translate-y-1/2 flex justify-between px-12 pointer-events-none z-50">
           <button 
             onClick={(e) => { e.stopPropagation(); handlePrev(); }}
-            className="fixed left-4 md:left-8 top-1/2 -translate-y-1/2 p-4 text-paper bg-white/10 hover:bg-white/20 rounded-full transition-all z-50 hidden md:block"
+            className="group pointer-events-auto flex flex-col items-center gap-4 opacity-20 hover:opacity-100 transition-all"
           >
-            <ChevronLeft size={32} strokeWidth={1.5} />
+            <div className="w-14 h-14 rounded-full border border-paper/10 flex items-center justify-center bg-white/5 active:scale-95 transition-transform backdrop-blur-sm">
+              <ChevronLeft size={28} className="text-paper" />
+            </div>
+            <span className="micro-label text-[10px] text-paper/40 font-black tracking-[0.4em]">PREV</span>
           </button>
           <button 
             onClick={(e) => { e.stopPropagation(); handleNext(); }}
-            className="fixed right-4 md:right-8 top-1/2 -translate-y-1/2 p-4 text-paper bg-white/10 hover:bg-white/20 rounded-full transition-all z-50 hidden md:block"
+            className="group pointer-events-auto flex flex-col items-center gap-4 opacity-20 hover:opacity-100 transition-all"
           >
-            <ChevronRight size={32} strokeWidth={1.5} />
+            <div className="w-14 h-14 rounded-full border border-paper/10 flex items-center justify-center bg-white/5 active:scale-95 transition-transform backdrop-blur-sm">
+              <ChevronRight size={28} className="text-paper" />
+            </div>
+            <span className="micro-label text-[10px] text-paper/40 font-black tracking-[0.4em]">NEXT</span>
           </button>
-        </>
+        </div>
       )}
 
       <motion.div 
         key={id}
-        initial={{ y: 20, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        exit={{ y: -20, opacity: 0 }}
+        initial={{ x: direction * 50, opacity: 0 }}
+        animate={{ x: 0, opacity: 1 }}
+        exit={{ x: -direction * 50, opacity: 0 }}
         transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
         onClick={(e) => e.stopPropagation()}
         drag={isPortrait ? false : "x"}
         dragConstraints={{ left: 0, right: 0 }}
         dragElastic={0.2}
         onDragEnd={onDragEnd}
-        className={`bg-paper w-full max-w-7xl shadow-2xl overflow-hidden relative flex z-10 text-ink border border-line ${
+        className={`bg-paper shadow-2xl overflow-hidden relative flex z-10 text-ink border border-line m-auto ${
           isPortrait 
-            ? "flex-col aspect-[1/2] max-h-[95vh]" 
-            : "md:flex-row aspect-[5/3] max-h-[90vh]"
+            ? "flex-col w-[min(90vw,47vh)] aspect-[1/2] max-h-[95vh]" 
+            : "md:flex-row h-[min(90vh,57vw)] w-auto aspect-[5/3] max-w-7xl"
         }`}
       >
         {/* Global Floating Close Button */}
@@ -215,7 +232,7 @@ export default function PokemonModal({ initialId, initialFormIndex = 0, onClose,
           </button>
         </div>
 
-          <div className={`flex flex-1 ${isPortrait ? "flex-col overflow-y-auto custom-scrollbar" : "flex-row overflow-hidden"}`}>
+          <div className={`flex flex-1 ${isPortrait ? "flex-col overflow-y-auto custom-scrollbar" : "flex-row overflow-visible"}`}>
           {/* Classification Info - Above Image in Mobile */}
           {isPortrait && (
             <div className="px-8 pt-8 pb-8 space-y-4">
@@ -240,7 +257,7 @@ export default function PokemonModal({ initialId, initialFormIndex = 0, onClose,
 
           {/* Image Area - Square Focused */}
           <div 
-            className={`relative aspect-square flex flex-col items-center justify-center shiny-gradient overflow-hidden bg-white dark:bg-black/20 shrink-0 border-line ${
+            className={`relative aspect-square flex flex-col items-center justify-center shiny-gradient bg-white dark:bg-black/20 shrink-0 border-line ${
               isPortrait ? "w-full border-t border-b" : "h-full border-r"
             }`}
           >
@@ -308,21 +325,70 @@ export default function PokemonModal({ initialId, initialFormIndex = 0, onClose,
           </div>
 
           {allForms.length > 1 && (
-            <div className="absolute top-1/2 -translate-y-1/2 right-4 flex flex-col gap-4">
-              {allForms.map((f, i) => (
-                <button 
-                  key={i}
-                  onClick={() => handleFormSelect(i)}
-                  className={`w-0.5 h-6 transition-all ${i === currentFormIndex ? "bg-ink h-10" : "bg-line hover:bg-ink/20"}`} 
-                />
-              ))}
+            <div 
+              className="absolute top-1/2 -translate-y-1/2 right-0 flex flex-col items-end z-40 group/selector pointer-events-none"
+              onMouseLeave={() => setHoveredFormIndex(null)}
+            >
+              <div className="flex flex-col gap-0.5 items-end max-h-[80vh] min-w-[500px] overflow-y-auto no-scrollbar py-20 pr-6 pl-[300px] scroll-smooth pointer-events-auto">
+                {allForms.map((f, i) => {
+                  const isHovered = hoveredFormIndex === i;
+                  const isActive = i === currentFormIndex;
+                  const manyForms = allForms.length > 20;
+
+                  // Magnification effect
+                  let magnification = 1;
+                  if (hoveredFormIndex !== null) {
+                    const dist = Math.abs(i - hoveredFormIndex);
+                    if (dist === 0) magnification = 2.5;
+                    else if (dist === 1) magnification = 1.8;
+                    else if (dist === 2) magnification = 1.3;
+                  }
+                  
+                  return (
+                    <div 
+                      key={i}
+                      className={`relative flex items-center justify-end group/form cursor-pointer select-none ${manyForms ? "py-0" : "py-0.5"}`}
+                      onMouseEnter={() => setHoveredFormIndex(i)}
+                      onClick={() => handleFormSelect(i)}
+                    >
+                      {/* Name Tag */}
+                      <AnimatePresence>
+                        {isHovered && (
+                          <motion.div
+                            initial={{ opacity: 0, x: 20, scale: 0.8 }}
+                            animate={{ opacity: 1, x: 0, scale: 1 }}
+                            exit={{ opacity: 0, x: 10, scale: 0.9 }}
+                            transition={{ duration: 0.2, ease: "easeOut" }}
+                            className="absolute right-full mr-8 bg-ink text-paper micro-label px-3 py-2 whitespace-nowrap shadow-2xl z-50 pointer-events-none italic border border-paper/10 text-[10px]"
+                          >
+                            {f["special form"] || f.name}
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+
+                      <div className={`w-12 flex items-center justify-end group-hover/selector:pr-1 transition-all ${manyForms ? "h-3" : "h-5"}`}>
+                        <motion.div 
+                          initial={false}
+                          animate={{ 
+                            width: (isActive ? 40 : 8) * magnification,
+                            height: (isActive ? 3 : 2) * (magnification * 0.6 + 0.4),
+                            opacity: isActive || isHovered ? 1 : 0.1,
+                          }}
+                          transition={{ type: "spring", stiffness: 450, damping: 30 }}
+                          className={`rounded-full origin-right ${isActive || isHovered ? "bg-ink" : "bg-clay"}`}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           )}
         </div>
 
-        <div className={`flex flex-col custom-scrollbar relative ${isPortrait ? "w-full p-10" : "md:w-5/12 p-12 lg:p-14 overflow-y-auto"}`}>
+        <div className={`flex flex-col custom-scrollbar relative ${isPortrait ? "w-full p-10 pb-28" : "md:w-5/12 p-12 lg:p-14 overflow-y-auto"}`}>
           {!isPortrait && (
-            <header className="mb-10">
+            <header className="mb-12">
               <div className="flex flex-col gap-4">
                 <div className="flex flex-col overflow-visible max-w-[90%]">
                   <h2 className="font-display font-black tracking-tighter leading-[1] text-6xl lg:text-7xl pb-4 whitespace-nowrap">
@@ -341,8 +407,8 @@ export default function PokemonModal({ initialId, initialFormIndex = 0, onClose,
             </header>
           )}
 
-          <section className="mb-10 space-y-3">
-            <p className="font-display text-lg font-black text-ink uppercase tracking-[0.25em]">{form.category} Pokémon</p>
+          <section className="mb-12 space-y-4">
+            <p className="font-display text-xl font-black text-ink uppercase tracking-[0.3em] leading-none">{form.category} Pokémon</p>
             <div className="space-y-4">
               <span className="micro-label opacity-30 block">D3x Entry</span>
               <p className="text-sm font-medium leading-relaxed italic border-l-[3px] border-line pl-6 py-1">
@@ -351,8 +417,8 @@ export default function PokemonModal({ initialId, initialFormIndex = 0, onClose,
             </div>
           </section>
 
-          <div className="space-y-10">
-            <section className="grid grid-cols-2 gap-10 border-b border-line pb-10">
+          <div className="space-y-12">
+            <section className="grid grid-cols-2 gap-10 border-b border-line pb-12">
               <div className="space-y-2">
                 <span className="micro-label opacity-40">Height</span>
                 <p className="font-display font-bold text-3xl tracking-tighter">{form.height / 100}<span className="text-xs ml-1 opacity-40">M</span></p>
@@ -375,7 +441,7 @@ export default function PokemonModal({ initialId, initialFormIndex = 0, onClose,
               </div>
             </section>
 
-            <section className="space-y-6 pt-10 border-t border-line overflow-hidden">
+            <section className="space-y-6 pt-12 border-t border-line overflow-hidden">
               <span className="micro-label opacity-40">Evolutionary Line</span>
               <div className="flex justify-center w-full py-4">
                 <EvolutionChain 
@@ -389,7 +455,26 @@ export default function PokemonModal({ initialId, initialFormIndex = 0, onClose,
           </div>
         </div>
       </div>
-    </motion.div>
+
+      {/* Archive Navigation Rail - Shown on narrower displays */}
+        {isNarrow && gallery.length > 1 && (
+          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center bg-paper/90 backdrop-blur-md border border-line rounded-full px-6 py-3 shadow-2xl">
+            <button 
+              onClick={handlePrev}
+              className="flex items-center gap-3 micro-label text-ink/60 hover:text-ink transition-colors active:scale-95"
+            >
+              <ChevronLeft size={16} /> <span className="font-bold tracking-[0.2em] text-[10px]">PREV</span>
+            </button>
+            <div className="mx-6 w-px h-3 bg-line" />
+            <button 
+              onClick={handleNext}
+              className="flex items-center gap-3 micro-label text-ink/60 hover:text-ink transition-colors active:scale-95"
+            >
+              <span className="font-bold tracking-[0.2em] text-[10px]">NEXT</span> <ChevronRight size={16} />
+            </button>
+          </div>
+        )}
+      </motion.div>
     </div>
   );
 }

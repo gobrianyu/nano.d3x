@@ -21,8 +21,14 @@ export default function App() {
   const [selectedRegion, setSelectedRegion] = useState("All");
   const [selectedType, setSelectedType] = useState<PokemonType | "All">("All");
   const [activeFilter, setActiveFilter] = useState<string | null>(null);
-  const [shinyMode, setShinyMode] = useState(false);
-  const [darkMode, setDarkMode] = useState(false);
+  const [shinyMode, setShinyMode] = useState(() => {
+    const saved = localStorage.getItem("shinyMode");
+    return saved ? JSON.parse(saved) : false;
+  });
+  const [darkMode, setDarkMode] = useState(() => {
+    const saved = localStorage.getItem("darkMode");
+    return saved ? JSON.parse(saved) : false;
+  });
   const searchInputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
 
@@ -56,6 +62,11 @@ export default function App() {
   }, [indexData, queryClient]);
 
   useEffect(() => {
+    localStorage.setItem("shinyMode", JSON.stringify(shinyMode));
+  }, [shinyMode]);
+
+  useEffect(() => {
+    localStorage.setItem("darkMode", JSON.stringify(darkMode));
     if (darkMode) {
       document.documentElement.classList.add("dark");
     } else {
@@ -122,24 +133,42 @@ export default function App() {
         p.id.toString().includes(searchQuery) ||
         fallbackName.includes(searchQuery.toLowerCase());
       
-      const region = REGIONS.find(r => p.id >= r.startId && p.id <= r.endId);
-      const matchesRegion = selectedRegion === "All" || region?.name === selectedRegion;
+      const regionInfo = REGIONS.find(r => p.id >= r.startId && p.id <= r.endId);
+      const matchesRegion = selectedRegion === "All" || regionInfo?.name === selectedRegion;
 
       const visible = matchesSearch && matchesRegion && matchesType;
 
       return {
         ...p,
         matchedFormIndex,
-        visible
+        visible,
+        regionName: regionInfo?.name || "Unknown"
       };
     }).filter(p => p.visible);
   }, [indexData, searchQuery, selectedRegion, selectedType, queryClient]);
+
+  // Group by regions for section headers (only when not searching/filtering by type/region)
+  const sections = useMemo(() => {
+    const isFiltering = searchQuery !== "" || selectedType !== "All" || selectedRegion !== "All";
+    if (isFiltering) return null;
+
+    return REGIONS.map(region => {
+      const pokemon = filteredIndex.filter(p => p.id >= region.startId && p.id <= region.endId);
+      if (pokemon.length === 0) return null;
+      
+      return {
+        ...region,
+        registeredCount: pokemon.length,
+        pokemon
+      };
+    }).filter((s): s is NonNullable<typeof s> => s !== null);
+  }, [filteredIndex, searchQuery, selectedType]);
 
   const totalCompleted = indexData.length;
   const targetTotal = 1025;
 
   return (
-    <div className={`${darkMode ? "dark" : ""} min-h-screen flex flex-col p-8 md:p-16 lg:p-24 selection:bg-rose-100 text-ink bg-paper transition-colors duration-500`}>
+    <div className={`${darkMode ? "dark" : ""} min-h-screen flex flex-col p-8 md:p-16 lg:p-24 selection:bg-rose-100 text-ink bg-paper transition-colors`}>
       {/* Header - Editorial Style */}
       <header className="flex flex-col md:flex-row md:items-end justify-between gap-12 mb-32">
         <div className="space-y-6">
@@ -311,20 +340,61 @@ export default function App() {
         </div>
 
         {/* The Exhibition Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-px museum-grid">
-          {filteredIndex.map((pokemon) => (
-            <div key={pokemon.id} className="museum-cell">
-              <PokemonCard
-                pokemon={pokemon}
-                targetFormIndex={pokemon.matchedFormIndex}
-                shinyMode={shinyMode}
-                onClick={() => {
-                  setSelectedPokemonId(pokemon.id);
-                  setSelectedFormIndex(pokemon.matchedFormIndex);
-                }}
-              />
+        <div className="flex flex-col museum-grid">
+          {sections ? (
+            sections.map((section) => (
+              <div key={section.name} className="relative">
+                <div className="sticky top-0 z-30 backdrop-blur-md border-b border-line py-4 px-6 flex justify-between items-center h-14">
+                  <div className="flex items-center gap-4">
+                    <div className="w-1 h-3 bg-ink" />
+                    <span className="micro-label font-black tracking-[0.4em] text-ink text-[10px]">{section.name.toUpperCase()}</span>
+                  </div>
+                  <div className="flex items-center gap-6">
+                    <span className="micro-label opacity-40 font-bold whitespace-nowrap">
+                      {section.registeredCount} / {section.count} <span className="hidden sm:inline">ENTRIES</span>
+                    </span>
+                    <div className="w-24 h-[1px] bg-line relative hidden sm:block">
+                      <div 
+                        className="absolute left-0 top-0 h-full bg-ink transition-all duration-1000" 
+                        style={{ width: `${(section.registeredCount / section.count) * 100}%` }} 
+                      />
+                    </div>
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-px">
+                  {section.pokemon.map((pokemon) => (
+                    <div key={pokemon.id} className="museum-cell">
+                      <PokemonCard
+                        pokemon={pokemon}
+                        targetFormIndex={pokemon.matchedFormIndex}
+                        shinyMode={shinyMode}
+                        onClick={() => {
+                          setSelectedPokemonId(pokemon.id);
+                          setSelectedFormIndex(pokemon.matchedFormIndex);
+                        }}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-px">
+              {filteredIndex.map((pokemon) => (
+                <div key={pokemon.id} className="museum-cell">
+                  <PokemonCard
+                    pokemon={pokemon}
+                    targetFormIndex={pokemon.matchedFormIndex}
+                    shinyMode={shinyMode}
+                    onClick={() => {
+                      setSelectedPokemonId(pokemon.id);
+                      setSelectedFormIndex(pokemon.matchedFormIndex);
+                    }}
+                  />
+                </div>
+              ))}
             </div>
-          ))}
+          )}
         </div>
 
         {filteredIndex.length === 0 && !loading && (

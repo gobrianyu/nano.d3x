@@ -26,7 +26,7 @@
   }
 
   body {
-    @apply bg-paper text-ink selection:bg-ink selection:text-paper antialiased font-sans min-h-screen transition-colors duration-500;
+    @apply bg-paper text-ink selection:bg-ink selection:text-paper antialiased font-sans min-h-screen transition-colors;
   }
 }
 
@@ -71,4 +71,12 @@
 
 .shiny-gradient {
   background: radial-gradient(circle at center, rgba(255, 215, 0, 0.05) 0%, transparent 70%);
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
