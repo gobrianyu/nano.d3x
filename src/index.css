@@ -8,7 +8,6 @@
 
   --color-paper: var(--paper);
   --color-ink: var(--ink);
-  --color-clay: #717171;
   --color-line: var(--line);
 }
 
@@ -17,12 +16,14 @@
     --paper: #fcfcf9;
     --ink: #121212;
     --line: rgba(18, 18, 18, 0.08);
+    color-scheme: light;
   }
 
   .dark {
     --paper: #121212;
     --ink: #fcfcf9;
     --line: rgba(255, 255, 255, 0.15);
+    color-scheme: dark;
   }
 
   body {
@@ -36,7 +37,7 @@
   }
   
   .micro-label {
-    @apply font-mono text-[9px] uppercase tracking-[0.25em] text-clay font-bold leading-none;
+    @apply font-mono text-[9px] uppercase tracking-[0.25em] text-ink/50 font-bold leading-none;
   }
 
   .museum-grid {

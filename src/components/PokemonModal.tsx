@@ -322,7 +322,7 @@ export default function PokemonModal({ initialId, initialFormIndex = 0, onClose,
                   animate={{ scale: 1, opacity: imgLoading ? 0 : 1 }}
                   exit={{ scale: 1.05, opacity: 0 }}
                   transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-                  src={cachedImageUrl || ""}
+                  src={cachedImageUrl || null}
                   alt={form.name}
                   referrerPolicy="no-referrer"
                   className={`max-w-full max-h-full object-contain drop-shadow-[0_20px_60px_rgba(0,0,0,0.08)] dark:drop-shadow-[0_20px_60px_rgba(255,255,255,0.03)] transition-opacity duration-300 ${imgLoading ? "opacity-0" : "opacity-100"}`}
@@ -391,7 +391,7 @@ export default function PokemonModal({ initialId, initialFormIndex = 0, onClose,
                             opacity: isActive || isHovered ? 1 : 0.1,
                           }}
                           transition={{ type: "spring", stiffness: 450, damping: 30 }}
-                          className={`rounded-full origin-right ${isActive || isHovered ? "bg-ink" : "bg-clay"}`}
+                          className={`rounded-full origin-right ${isActive || isHovered ? "bg-ink" : "bg-ink/10"}`}
                         />
                       </div>
                     </div>

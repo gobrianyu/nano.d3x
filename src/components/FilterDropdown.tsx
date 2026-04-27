@@ -43,7 +43,7 @@ export default function FilterDropdown<T extends string>({
     <div ref={dropdownRef} className="relative">
       <button
         onClick={() => setActiveFilter(isOpen ? null : filterId)}
-        className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest focus:outline-none cursor-pointer hover:text-clay transition-colors text-ink h-10"
+        className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest focus:outline-none cursor-pointer hover:text-ink/60 transition-colors text-ink h-10"
       >
         <span className="opacity-40">{label}:</span>
         <span className="min-w-[4rem] text-left">{value}</span>
@@ -68,10 +68,10 @@ export default function FilterDropdown<T extends string>({
                       setActiveFilter(null);
                     }}
                     className={`text-left text-[9px] font-bold uppercase tracking-[0.2em] transition-all flex items-center gap-3 py-1 group/opt ${
-                      value === option ? "text-ink opacity-100" : "text-clay opacity-30 hover:opacity-100"
+                      value === option ? "text-ink opacity-100" : "text-ink/30 hover:opacity-100"
                     }`}
                   >
-                    <div className={`w-1 h-1 rounded-full transition-all ${value === option ? "bg-ink scale-125" : "bg-transparent group-hover/opt:bg-clay scale-75"}`} />
+                    <div className={`w-1 h-1 rounded-full transition-all ${value === option ? "bg-ink scale-125" : "bg-transparent group-hover/opt:bg-ink/30 scale-75"}`} />
                     {renderOption ? renderOption(option) : option}
                   </button>
                 ))}

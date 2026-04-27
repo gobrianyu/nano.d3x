@@ -69,8 +69,10 @@ export default function App() {
     localStorage.setItem("darkMode", JSON.stringify(darkMode));
     if (darkMode) {
       document.documentElement.classList.add("dark");
+      document.documentElement.style.colorScheme = "dark";
     } else {
       document.documentElement.classList.remove("dark");
+      document.documentElement.style.colorScheme = "light";
     }
   }, [darkMode]);
 
@@ -235,7 +237,7 @@ export default function App() {
           <div className="flex flex-col lg:flex-row gap-12 items-end justify-between pb-12">
             <div className="flex flex-col md:flex-row gap-12 flex-1 w-full items-end">
               <div className="relative group w-full max-w-md">
-                <Search className="absolute left-0 top-1/2 -translate-y-1/2 text-clay group-focus-within:text-ink transition-colors" size={16} />
+                <Search className="absolute left-0 top-1/2 -translate-y-1/2 text-ink/30 group-focus-within:text-ink transition-colors" size={16} />
                 <input
                   ref={searchInputRef}
                   type="text"
@@ -298,7 +300,7 @@ export default function App() {
                 {(selectedRegion !== "All" || selectedType !== "All" || searchQuery !== "") && (
                   <button 
                     onClick={handleResetFilters}
-                    className="micro-label text-ink hover:text-clay transition-colors flex items-center gap-2 h-10 border-l border-line pl-12 ml-4"
+                    className="micro-label text-ink hover:text-ink/60 transition-colors flex items-center gap-2 h-10 border-l border-line pl-12 ml-4"
                   >
                     Reset Filters
                   </button>
@@ -326,10 +328,10 @@ export default function App() {
                           setActiveFilter(null);
                         }}
                         className={`text-left text-[9px] font-bold uppercase tracking-[0.2em] transition-all flex items-center gap-3 py-1 group/opt ${
-                          (activeFilter === "region" ? selectedRegion : selectedType) === option ? "text-ink opacity-100" : "text-clay opacity-30 hover:opacity-100"
+                          (activeFilter === "region" ? selectedRegion : selectedType) === option ? "text-ink opacity-100" : "text-ink/30 hover:opacity-100"
                         }`}
                       >
-                        <div className={`w-1 h-1 rounded-full transition-all ${((activeFilter === "region" ? selectedRegion : selectedType) === option) ? "bg-ink scale-125" : "bg-transparent group-hover/opt:bg-clay scale-75"}`} />
+                        <div className={`w-1 h-1 rounded-full transition-all ${((activeFilter === "region" ? selectedRegion : selectedType) === option) ? "bg-ink scale-125" : "bg-transparent group-hover/opt:bg-ink/30 scale-75"}`} />
                         <div className="flex items-center gap-2">
                           {activeFilter === "type" && option !== "All" && (
                             <img 
@@ -411,7 +413,7 @@ export default function App() {
         {filteredIndex.length === 0 && !loading && (
           <div className="py-60 flex flex-col items-center justify-center text-center space-y-6">
             <HelpCircle size={40} strokeWidth={1} className="opacity-20" />
-            <p className="text-clay text-xs uppercase tracking-[0.4em] font-medium">Record not found in current archive</p>
+            <p className="text-ink/40 text-xs uppercase tracking-[0.4em] font-medium">Record not found in current archive</p>
           </div>
         )}
       </div>

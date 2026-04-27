@@ -56,7 +56,7 @@ function EvolutionNode({ id, shinyMode, onSelect, isCurrent }: EvolutionNodeProp
           <span className="text-xl font-display font-black opacity-10">?</span>
         ) : (
           <img
-            src={cachedImageUrl || ""}
+            src={cachedImageUrl || null}
             alt={pokemonName}
             referrerPolicy="no-referrer"
             className={`w-10 h-10 sm:w-12 sm:h-12 object-contain transition-all duration-300 ${imgLoading || isLoading ? "opacity-0" : "opacity-100 group-hover/node:scale-110"}`}

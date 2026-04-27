@@ -71,7 +71,7 @@ export default function PokemonCard({ pokemon, targetFormIndex = 0, shinyMode, o
               </div>
             )}
             <img
-              src={cachedImageUrl || ""}
+              src={cachedImageUrl || null}
               alt={pokemonName}
               referrerPolicy="no-referrer"
               className={`h-[100%] w-[100%] object-contain transition-opacity duration-300 ${loading ? "opacity-0" : "opacity-100"}`}

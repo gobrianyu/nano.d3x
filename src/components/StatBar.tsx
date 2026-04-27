@@ -26,7 +26,7 @@ export default function StatBar({ label, value, max = 255 }: StatBarProps) {
 
   return (
     <div className="flex items-center gap-4 group">
-      <span className="text-[10px] font-bold text-clay dark:text-paper/40 w-14 uppercase tracking-tighter opacity-60">{label}</span>
+      <span className="text-[10px] font-bold text-ink/40 w-14 uppercase tracking-tighter">{label}</span>
       <div className="h-1.5 flex-1 bg-black/5 dark:bg-white/10 rounded-full overflow-hidden">
         <motion.div
           initial={{ width: 0 }}
