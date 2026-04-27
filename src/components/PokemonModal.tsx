@@ -75,7 +75,11 @@ export default function PokemonModal({ initialId, initialFormIndex = 0, onClose,
   }, [detail]);
 
   const allForms = [...(detail?.forms || []), ...(detail?.["gimmick forms"] || [])];
+  const regularFormsCount = detail?.forms?.length || 0;
+  const isGimmick = currentFormIndex >= regularFormsCount;
   const form = allForms[currentFormIndex];
+
+  const isGigantamax = form?.["special form"]?.startsWith("Gigantamax");
 
   const imageKey = `image asset ${gender}${shinyMode ? " shiny" : ""}` as keyof PokemonForm;
   const imageUrl = form ? `${BASE_IMAGE_URL}/${form[imageKey] || "unknown.png"}` : "";
@@ -282,7 +286,7 @@ export default function PokemonModal({ initialId, initialFormIndex = 0, onClose,
           )}
 
           {/* Gender Toggles */}
-          {detail.gendered && (
+          {detail.gendered && !isGimmick && (
              <div className="absolute top-8 right-8 z-10 flex gap-4 pointer-events-auto">
                {(detail["male:female ratio"] !== 0) && (
                  <button 
@@ -433,11 +437,18 @@ export default function PokemonModal({ initialId, initialFormIndex = 0, onClose,
             <section className="grid grid-cols-2 gap-10 border-b border-line pb-12">
               <div className="space-y-2">
                 <span className="micro-label opacity-40">Height</span>
-                <p className="font-display font-bold text-3xl tracking-tighter">{form.height / 100}<span className="text-xs ml-1 opacity-40">M</span></p>
+                <p className="font-display font-bold text-3xl tracking-tighter">
+                  {(form.height / 100).toFixed(1)}
+                  {isGigantamax && "+"}
+                  <span className="text-xs ml-1 opacity-40">M</span>
+                </p>
               </div>
               <div className="space-y-2">
                 <span className="micro-label opacity-40">Weight</span>
-                <p className="font-display font-bold text-3xl tracking-tighter">{form.weight}<span className="text-xs ml-1 opacity-40">KG</span></p>
+                <p className="font-display font-bold text-3xl tracking-tighter">
+                  {form.weight === -1 ? "???" : form.weight}
+                  {form.weight !== -1 && <span className="text-xs ml-1 opacity-40">KG</span>}
+                </p>
               </div>
             </section>
 
@@ -453,17 +464,19 @@ export default function PokemonModal({ initialId, initialFormIndex = 0, onClose,
               </div>
             </section>
 
-            <section className="space-y-6 pt-12 border-t border-line overflow-hidden">
-              <span className="micro-label opacity-40">Evolutionary Line</span>
-              <div className="flex justify-center w-full py-4">
-                <EvolutionChain 
-                  indexData={indexData} 
-                  shinyMode={shinyMode} 
-                  currentId={id + (currentFormIndex / 100)}
-                  onSelect={handleJumpToPokemon}
-                />
-              </div>
-            </section>
+            {!isGimmick && (
+              <section className="space-y-6 pt-12 border-t border-line overflow-hidden">
+                <span className="micro-label opacity-40">Evolutionary Line</span>
+                <div className="flex justify-center w-full py-4">
+                  <EvolutionChain 
+                    indexData={indexData} 
+                    shinyMode={shinyMode} 
+                    currentId={id + (currentFormIndex / 100)}
+                    onSelect={handleJumpToPokemon}
+                  />
+                </div>
+              </section>
+            )}
           </div>
         </div>
       </div>

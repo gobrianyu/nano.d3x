@@ -125,7 +125,7 @@ export default function App() {
       let officialName = fallbackName;
 
       if (detail) {
-        const allForms = [...detail.forms, ...detail["gimmick forms"]];
+        const allForms = [...(detail.forms || []), ...(detail["gimmick forms"] || [])];
         
         // Find the first form matching the type
         if (selectedType !== "All") {
