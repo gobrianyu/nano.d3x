@@ -66,6 +66,14 @@ export default function PokemonModal({ initialId, initialFormIndex = 0, onClose,
     enabled: !!id,
   });
 
+  useEffect(() => {
+    if (detail) {
+      const ratio = detail["male:female ratio"];
+      if (ratio === 100) setGender("m");
+      else if (ratio === 0) setGender("f");
+    }
+  }, [detail]);
+
   const allForms = [...(detail?.forms || []), ...(detail?.["gimmick forms"] || [])];
   const form = allForms[currentFormIndex];
 
@@ -276,18 +284,22 @@ export default function PokemonModal({ initialId, initialFormIndex = 0, onClose,
           {/* Gender Toggles */}
           {detail.gendered && (
              <div className="absolute top-8 right-8 z-10 flex gap-4 pointer-events-auto">
-               <button 
-                onClick={() => setGender("m")}
-                className={`micro-label transition-all flex items-center gap-2 ${gender === "m" ? "text-ink" : "opacity-20"}`}
-              >
-                <Mars size={12} /> M
-              </button>
-              <button 
-                onClick={() => setGender("f")}
-                className={`micro-label transition-all flex items-center gap-2 ${gender === "f" ? "text-ink" : "opacity-20"}`}
-              >
-                <Venus size={12} /> F
-              </button>
+               {(detail["male:female ratio"] !== 0) && (
+                 <button 
+                  onClick={() => detail["male:female ratio"] !== 100 && setGender("m")}
+                  className={`micro-label transition-all flex items-center gap-2 ${gender === "m" ? "text-ink" : "opacity-20"} ${detail["male:female ratio"] === 100 ? "cursor-default" : ""}`}
+                >
+                  <Mars size={12} /> M
+                </button>
+               )}
+               {(detail["male:female ratio"] !== 100) && (
+                 <button 
+                  onClick={() => detail["male:female ratio"] !== 0 && setGender("f")}
+                  className={`micro-label transition-all flex items-center gap-2 ${gender === "f" ? "text-ink" : "opacity-20"} ${detail["male:female ratio"] === 0 ? "cursor-default" : ""}`}
+                >
+                  <Venus size={12} /> F
+                </button>
+               )}
             </div>
           )}
 

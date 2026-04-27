@@ -74,6 +74,17 @@ export default function App() {
     }
   }, [darkMode]);
 
+  useEffect(() => {
+    if (selectedPokemonId !== null) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [selectedPokemonId]);
+
   const handleClearSearch = () => {
     setSearchQuery("");
     searchInputRef.current?.blur();
