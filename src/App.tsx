@@ -29,6 +29,7 @@ export default function App() {
     const saved = localStorage.getItem("darkMode");
     return saved ? JSON.parse(saved) : false;
   });
+  const [lastDetailFetchTime, setLastDetailFetchTime] = useState(0);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
 
@@ -53,6 +54,7 @@ export default function App() {
               staleTime: Infinity
             })
           ));
+          setLastDetailFetchTime(Date.now());
           // Small delay between chunks
           await new Promise(r => setTimeout(r, 100));
         }
@@ -158,7 +160,7 @@ export default function App() {
         regionName: regionInfo?.name || "Unknown"
       };
     }).filter(p => p.visible);
-  }, [indexData, searchQuery, selectedRegion, selectedType, queryClient]);
+  }, [indexData, searchQuery, selectedRegion, selectedType, queryClient, lastDetailFetchTime]);
 
   // Group by regions for section headers (only when not searching/filtering by type/region)
   const sections = useMemo(() => {

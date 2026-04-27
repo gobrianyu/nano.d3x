@@ -203,7 +203,6 @@ export default function PokemonModal({ initialId, initialFormIndex = 0, onClose,
             <div className="w-14 h-14 rounded-full border border-paper/10 flex items-center justify-center bg-white/5 active:scale-95 transition-transform backdrop-blur-sm">
               <ChevronLeft size={28} className="text-paper" />
             </div>
-            <span className="micro-label text-[10px] text-paper/40 font-black tracking-[0.4em]">PREV</span>
           </button>
           <button 
             onClick={(e) => { e.stopPropagation(); handleNext(); }}
@@ -212,7 +211,6 @@ export default function PokemonModal({ initialId, initialFormIndex = 0, onClose,
             <div className="w-14 h-14 rounded-full border border-paper/10 flex items-center justify-center bg-white/5 active:scale-95 transition-transform backdrop-blur-sm">
               <ChevronRight size={28} className="text-paper" />
             </div>
-            <span className="micro-label text-[10px] text-paper/40 font-black tracking-[0.4em]">NEXT</span>
           </button>
         </div>
       )}
