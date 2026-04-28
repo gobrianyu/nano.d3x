@@ -30,7 +30,10 @@ export default function PokemonCard({ pokemon, targetFormIndex = 0, shinyMode, o
     staleTime: Infinity,
   });
 
-  const allForms = detail ? [...(detail.forms || []), ...(detail["gimmick forms"] || [])] : [];
+  const allForms = detail ? [
+    ...(detail.forms || []), 
+    ...(detail["gimmick forms"] || [])
+  ].filter(f => f && typeof f === 'object') : [];
   const targetForm = allForms[targetFormIndex] || allForms[0];
 
   const pokemonName = targetForm?.name || "???";

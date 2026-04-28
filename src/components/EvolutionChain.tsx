@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { PokemonDetail, PokemonIndexItem, PokemonForm } from "../types";
 import { BASE_DATA_URL, BASE_IMAGE_URL } from "../constants";
 import { ChevronRight, ImageOff, Loader2 } from "lucide-react";
@@ -28,8 +28,24 @@ function EvolutionNode({ id, shinyMode, onSelect, isCurrent }: EvolutionNodeProp
     staleTime: Infinity,
   });
 
-  const allForms = [...(detail?.forms || []), ...(detail?.["gimmick forms"] || [])];
-  const form = allForms[formIndex];
+  const allForms = useMemo(() => {
+    if (!detail) return [];
+    return [
+      ...(detail.forms || []), 
+      ...(detail["gimmick forms"] || [])
+    ].filter(f => f && typeof f === 'object');
+  }, [detail]);
+
+  const form = useMemo(() => {
+    if (allForms.length === 0) return null;
+    const index = allForms.findIndex(f => {
+      const formId = detail?.index === undefined ? detail?.["dex number"] : detail?.index;
+      const key = f?.key || formId;
+      return Math.abs(key - id) < 0.0001;
+    });
+    return index !== -1 ? allForms[index] : allForms[0];
+  }, [allForms, id, detail]);
+
   const pokemonName = form?.name || "???";
 
   const gender = "m";
@@ -94,13 +110,23 @@ export default function EvolutionChain({ shinyMode, onSelect, currentId }: Evolu
         // Helper to get form by decimal ID
         async function getFormFromId(fullId: number) {
           const dId = Math.floor(fullId);
-          const fIdx = Math.round((fullId % 1) * 100);
           const detail: PokemonDetail = await queryClient.ensureQueryData({
             queryKey: ["pokemonDetail", dId],
             queryFn: () => cachedFetch(`${BASE_DATA_URL}/pokemon/${dId}.json`),
           });
-          const allForms = [...(detail?.forms || []), ...(detail?.["gimmick forms"] || [])];
-          return { detail, form: allForms[fIdx] || allForms[0], fIdx };
+          const allForms = [
+            ...(detail?.forms || []), 
+            ...(detail?.["gimmick forms"] || [])
+          ].filter(f => f && typeof f === 'object');
+          
+          const index = allForms.findIndex(f => {
+            const formId = detail.index === undefined ? detail["dex number"] : detail.index;
+            const key = f?.key || formId;
+            return Math.abs(key - fullId) < 0.0001;
+          });
+          
+          const targetIndex = index !== -1 ? index : 0;
+          return { detail, form: allForms[targetIndex], fIdx: targetIndex };
         }
 
         // 1. Find the root of the chain starting from currentId

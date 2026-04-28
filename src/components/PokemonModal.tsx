@@ -1,4 +1,4 @@
-import { useState, useEffect, useLayoutEffect, useRef } from "react";
+import { useState, useEffect, useLayoutEffect, useRef, useMemo } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { X, ChevronLeft, ChevronRight, Weight, Ruler, Info, Venus, Mars, HelpCircle } from "lucide-react";
 import { PokemonDetail, PokemonForm, PokemonIndexItem, PokemonType } from "../types";
@@ -43,7 +43,6 @@ export default function PokemonModal({ initialId, initialFormIndex = 0, onClose,
 
   const currentItem = gallery[currentIndex];
   const id = currentItem?.id;
-  const currentFormIndex = currentItem?.matchedFormIndex ?? 0;
 
   const [gender, setGender] = useState<"m" | "f">("m");
   const [hoveredFormIndex, setHoveredFormIndex] = useState<number | null>(null);
@@ -74,10 +73,69 @@ export default function PokemonModal({ initialId, initialFormIndex = 0, onClose,
     }
   }, [detail]);
 
-  const allForms = [...(detail?.forms || []), ...(detail?.["gimmick forms"] || [])];
+  // Consolidate form construction to one place
+  const allForms = useMemo(() => {
+    if (!detail) return [];
+    return [
+      ...(detail.forms || []), 
+      ...(detail["gimmick forms"] || [])
+    ].filter(f => f && typeof f === 'object');
+  }, [detail]);
+
   const regularFormsCount = detail?.forms?.length || 0;
-  const isGimmick = currentFormIndex >= regularFormsCount;
+  
+  const [currentFormIndex, setCurrentFormIndex] = useState(0);
+
+  // Sync index when detail or initial ID changes
+  useEffect(() => {
+    if (detail && allForms.length > 0) {
+      const index = allForms.findIndex(f => {
+        const formId = detail.index === undefined ? detail["dex number"] : detail.index;
+        const key = f?.key || formId;
+        // Use a slightly larger epsilon for safer floating point comparison
+        return Math.abs(key - id) < 0.0001;
+      });
+      
+      if (index !== -1) {
+        setCurrentFormIndex(index);
+      } else {
+        // Fallback to base form if specific ID isn't found
+        setCurrentFormIndex(0);
+      }
+    }
+  }, [detail, id, allForms]);
+
   const form = allForms[currentFormIndex];
+  const isGimmick = currentFormIndex >= regularFormsCount;
+
+  // Final validation before rendering
+  const isValidData = !!(detail && detail["dex number"] && form && form.name);
+
+  if (!loading && detail && !isValidData) {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 modal-overlay" onClick={onClose}>
+        <div className="bg-paper dark:bg-ink w-full max-w-lg p-12 flex flex-col items-center gap-8 text-center border border-line dark:border-line-dark shadow-2xl pointer-events-auto">
+          <HelpCircle size={40} strokeWidth={1} className="opacity-20" />
+          <div className="space-y-2">
+            <p className="micro-label opacity-40">Entry Corrupted or Incomplete</p>
+            <p className="text-xs opacity-60">The species data for #{id} could not be fully reconstructed.</p>
+          </div>
+          <button onClick={onClose} className="micro-label px-8 py-3 border border-line hover:bg-ink hover:text-paper transition-colors">Close</button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isValidData) {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 modal-overlay">
+        <div className="bg-paper dark:bg-ink w-full max-w-sm p-12 flex flex-col items-center gap-6 border border-line dark:border-line-dark shadow-2xl">
+          <div className="w-10 h-10 border-2 border-ink/20 border-t-ink rounded-full animate-spin" />
+          <p className="micro-label opacity-40">Decrypting Files...</p>
+        </div>
+      </div>
+    );
+  }
 
   const isGigantamax = form?.["special form"]?.startsWith("Gigantamax");
 
@@ -168,7 +226,7 @@ export default function PokemonModal({ initialId, initialFormIndex = 0, onClose,
           <div className="space-y-3">
             <h3 className="font-display text-2xl font-black italic">Archive Incomplete</h3>
             <p className="text-xs uppercase tracking-widest opacity-40 leading-relaxed px-4">
-              Detailed records for this specimen are still being curated by the artist.
+              Detailed records for this Pokémon are still being curated by the artist.
             </p>
             {fetchError && <p className="text-[10px] font-mono opacity-20 mt-4 break-all">{(fetchError as Error).message}</p>}
           </div>
@@ -257,11 +315,21 @@ export default function PokemonModal({ initialId, initialFormIndex = 0, onClose,
                   {form.name}
                 </h2>
               </div>
-              <div className="flex flex-wrap gap-2">
-                {form.type.map((t) => (
-                  <span key={t} className="micro-label px-3 py-1 border border-line">{t}</span>
-                ))}
-              </div>
+                  <div className="flex flex-wrap gap-2">
+                    {form.type.map((t) => (
+                      <span 
+                        key={t} 
+                        className="font-mono text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-sm border"
+                        style={{ 
+                          backgroundColor: `${TYPE_COLORS[t as PokemonType]}15`, 
+                          color: TYPE_COLORS[t as PokemonType],
+                          borderColor: `${TYPE_COLORS[t as PokemonType]}30`
+                        }}
+                      >
+                        {t}
+                      </span>
+                    ))}
+                  </div>
             </div>
           )}
 
@@ -373,9 +441,9 @@ export default function PokemonModal({ initialId, initialFormIndex = 0, onClose,
                             animate={{ opacity: 1, x: 0, scale: 1 }}
                             exit={{ opacity: 0, x: 10, scale: 0.9 }}
                             transition={{ duration: 0.2, ease: "easeOut" }}
-                            className="absolute right-full mr-8 bg-ink text-paper micro-label px-3 py-2 whitespace-nowrap shadow-2xl z-50 pointer-events-none italic border border-paper/10 text-[10px]"
+                            className="absolute right-full mr-8 bg-ink text-paper px-3 py-2 whitespace-nowrap shadow-2xl z-50 pointer-events-none italic border border-paper/10 text-[10px] font-mono font-bold uppercase tracking-[0.2em] leading-none"
                           >
-                            {f["special form"] || f.name}
+                            {f?.["special form"] || f?.name || "???"}
                           </motion.div>
                         )}
                       </AnimatePresence>
@@ -384,12 +452,12 @@ export default function PokemonModal({ initialId, initialFormIndex = 0, onClose,
                         <motion.div 
                           initial={false}
                           animate={{ 
-                            width: (isActive ? 40 : 8) * magnification,
-                            height: (isActive ? 3 : 2) * (magnification * 0.6 + 0.4),
-                            opacity: isActive || isHovered ? 1 : 0.1,
+                            width: (isActive ? 40 : 10) * magnification,
+                            height: (isActive ? 4 : 3) * (magnification * 0.6 + 0.4),
+                            opacity: isActive || isHovered ? 1 : 0.4,
                           }}
                           transition={{ type: "spring", stiffness: 450, damping: 30 }}
-                          className={`rounded-full origin-right ${isActive || isHovered ? "bg-ink" : "bg-ink/10"}`}
+                          className={`rounded-full origin-right ${isActive || isHovered ? "bg-ink" : "bg-ink/30"}`}
                         />
                       </div>
                     </div>
@@ -412,9 +480,19 @@ export default function PokemonModal({ initialId, initialFormIndex = 0, onClose,
                     <span className="micro-label opacity-40 italic">Variant: {form["special form"]}</span>
                   )}
                 </div>
-                <div className="flex wrap gap-2">
+                <div className="flex flex-wrap gap-2">
                   {form.type.map((t) => (
-                    <span key={t} className="micro-label px-4 py-1.5 border border-line">{t}</span>
+                    <span 
+                      key={t} 
+                      className="font-mono text-[10px] font-bold uppercase tracking-wider px-3 py-1.5 rounded-sm border"
+                      style={{ 
+                        backgroundColor: `${TYPE_COLORS[t as PokemonType]}15`, 
+                        color: TYPE_COLORS[t as PokemonType],
+                        borderColor: `${TYPE_COLORS[t as PokemonType]}30`
+                      }}
+                    >
+                      {t}
+                    </span>
                   ))}
                 </div>
               </div>
@@ -469,7 +547,7 @@ export default function PokemonModal({ initialId, initialFormIndex = 0, onClose,
                   <EvolutionChain 
                     indexData={indexData} 
                     shinyMode={shinyMode} 
-                    currentId={id + (currentFormIndex / 100)}
+                    currentId={form.key || (detail["dex number"] + (currentFormIndex / 100))}
                     onSelect={handleJumpToPokemon}
                   />
                 </div>
