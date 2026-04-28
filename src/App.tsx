@@ -485,7 +485,7 @@ export default function App() {
             animate={{ y: 0 }}
             exit={{ y: -100 }}
             transition={{ type: "spring", damping: 25, stiffness: 200 }}
-            className="fixed top-0 left-0 w-full z-50 bg-paper/80 dark:bg-ink/80 backdrop-blur-xl border-b border-line px-4 md:px-8 h-16 flex items-center justify-between gap-4 md:gap-8 shadow-lg"
+            className="fixed top-0 left-0 w-full z-50 bg-paper/80 backdrop-blur-xl border-b border-line px-4 md:px-8 h-16 flex items-center justify-between gap-4 md:gap-8 shadow-lg"
           >
             {/* Title - Compact */}
             <div className="flex-shrink-0">
@@ -528,7 +528,7 @@ export default function App() {
                   className={`p-2 transition-all ${activeFilter === "combined-sticky" ? "text-ink scale-110" : "text-ink/40 hover:text-ink hover:scale-110"}`}
                   title="Filters"
                 >
-                  <Filter size={18} />
+                  <Filter size={14} />
                 </button>
 
                 <AnimatePresence>
@@ -537,7 +537,7 @@ export default function App() {
                       initial={{ opacity: 0, y: 10, scale: 0.95 }}
                       animate={{ opacity: 1, y: 0, scale: 1 }}
                       exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                      className="fixed top-16 left-0 w-full bg-paper dark:bg-ink border-b border-line shadow-2xl p-8 z-50 overflow-y-auto max-h-[70vh] no-scrollbar flex justify-center"
+                      className="fixed top-16 left-0 w-full bg-paper border-b border-line shadow-2xl p-8 z-50 overflow-y-auto max-h-[70vh] no-scrollbar flex justify-center"
                     >
                       <div className="w-full max-w-4xl space-y-12">
                         <div className="flex justify-between items-center border-b border-line pb-4">
@@ -616,13 +616,12 @@ export default function App() {
             </div>
 
             {/* Actions & Modes */}
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-6">
               <button 
                 onClick={() => setShinyMode(!shinyMode)}
-                className={`w-10 h-10 rounded-full border border-line transition-all flex items-center justify-center ${shinyMode ? "bg-ink text-paper border-ink" : "hover:border-ink text-ink"}`}
-                title={shinyMode ? "Classic Mode" : "Shiny Mode"}
+                className="micro-label font-bold text-ink hover:text-ink/60 transition-all border-b border-line hover:border-ink pb-1"
               >
-                <Sparkles size={16} />
+                {shinyMode ? "CLASSIC" : "SHINY"}
               </button>
 
               <button 

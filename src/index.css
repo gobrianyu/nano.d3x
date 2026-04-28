@@ -67,7 +67,7 @@
 }
 
 .modal-overlay {
-  @apply bg-paper/60 dark:bg-ink/60 backdrop-blur-md;
+  @apply bg-paper/60 backdrop-blur-md;
 }
 
 .shiny-gradient {
