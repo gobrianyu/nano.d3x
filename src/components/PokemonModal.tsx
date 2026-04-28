@@ -93,7 +93,7 @@ export default function PokemonModal({ initialId, initialFormIndex = 0, onClose,
         const formId = detail.index === undefined ? detail["dex number"] : detail.index;
         const key = f?.key || formId;
         // Use a slightly larger epsilon for safer floating point comparison
-        return Math.abs(key - id) < 0.0001;
+        return Math.abs(Number(key) - id) < 0.0001;
       });
       
       if (index !== -1) {

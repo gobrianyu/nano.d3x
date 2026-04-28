@@ -10,7 +10,7 @@ import PokemonCard from "./components/PokemonCard";
 import PokemonModal from "./components/PokemonModal";
 import FilterDropdown from "./components/FilterDropdown";
 import { motion, AnimatePresence } from "motion/react";
-import { Instagram, Search, HelpCircle, X, Sun, Moon } from "lucide-react";
+import { Instagram, Search, HelpCircle, X, Sun, Moon, ArrowUp, Filter, Sparkles } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { cachedFetch } from "./lib/cacheService";
 
@@ -30,7 +30,10 @@ export default function App() {
     return saved ? JSON.parse(saved) : false;
   });
   const [lastDetailFetchTime, setLastDetailFetchTime] = useState(0);
+  const [showHeaderSticky, setShowHeaderSticky] = useState(false);
+  const [showBackToTop, setShowBackToTop] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const stickySearchInputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
 
   const { data: indexData = [], isLoading: loading } = useQuery<PokemonIndexItem[]>({
@@ -79,6 +82,24 @@ export default function App() {
   }, [darkMode]);
 
   useEffect(() => {
+    const handleScroll = () => {
+      const scrollPos = window.scrollY;
+      setShowHeaderSticky(scrollPos > 500);
+      setShowBackToTop(scrollPos > 400);
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  const scrollToTop = () => {
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth"
+    });
+  };
+
+  useEffect(() => {
     if (selectedPokemonId !== null) {
       document.body.style.overflow = "hidden";
     } else {
@@ -98,14 +119,21 @@ export default function App() {
     setSearchQuery("");
     setSelectedRegion("All");
     setSelectedType("All");
-    setActiveFilter(null);
   };
 
   const filterSectionRef = useRef<HTMLDivElement>(null);
+  const stickyHeaderRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (activeFilter && filterSectionRef.current && !filterSectionRef.current.contains(event.target as Node)) {
+      const target = event.target as Node;
+      if (!activeFilter) return;
+
+      // Check if target is inside any filter-related container
+      const isInsideStatic = filterSectionRef.current?.contains(target);
+      const isInsideSticky = stickyHeaderRef.current?.contains(target);
+
+      if (!isInsideStatic && !isInsideSticky) {
         setActiveFilter(null);
       }
     };
@@ -186,7 +214,7 @@ export default function App() {
   const targetTotal = 1025;
 
   return (
-    <div className={`${darkMode ? "dark" : ""} min-h-screen flex flex-col p-8 md:p-16 lg:p-24 selection:bg-rose-100 text-ink bg-paper transition-colors`}>
+    <div className={`${darkMode ? "dark" : ""} min-h-screen flex flex-col p-8 md:p-16 lg:p-24 pb-48 md:pb-64 selection:bg-rose-100 text-ink bg-paper transition-colors`}>
       {/* Header - Editorial Style */}
       <header className="flex flex-col md:flex-row md:items-end justify-between gap-12 mb-32">
         <div className="space-y-6">
@@ -239,8 +267,8 @@ export default function App() {
       {/* Navigation & Search - Minimal Rail */}
       <div className="flex flex-col gap-16" ref={filterSectionRef}>
         <div className="flex flex-col gap-0 border-b border-line">
-          <div className="flex flex-col lg:flex-row gap-12 items-end justify-between pb-12">
-            <div className="flex flex-col md:flex-row gap-12 flex-1 w-full items-end">
+          <div className="flex flex-col lg:flex-row gap-12 items-start lg:items-end justify-between pb-12">
+            <div className="flex flex-col md:flex-row gap-12 flex-1 w-full items-start md:items-end">
               <div className="relative group w-full max-w-md">
                 <Search className="absolute left-0 top-1/2 -translate-y-1/2 text-ink/30 group-focus-within:text-ink transition-colors" size={16} />
                 <input
@@ -266,7 +294,7 @@ export default function App() {
                 </AnimatePresence>
               </div>
 
-              <div className="flex items-center gap-12">
+              <div className="flex flex-wrap items-center gap-x-12 gap-y-6 w-full md:w-auto">
                 <FilterDropdown
                   label="Region"
                   value={selectedRegion}
@@ -302,12 +330,15 @@ export default function App() {
                   )}
                 />
 
-                {(selectedRegion !== "All" || selectedType !== "All" || searchQuery !== "") && (
+                {(selectedRegion !== "All" || selectedType !== "All") && (
                   <button 
-                    onClick={handleResetFilters}
-                    className="micro-label text-ink hover:text-ink/60 transition-colors flex items-center gap-2 h-10 border-l border-line pl-12 ml-4"
+                    onClick={() => {
+                      handleResetFilters();
+                      setActiveFilter(null);
+                    }}
+                    className="micro-label text-ink hover:text-ink/60 transition-all border-b border-line hover:border-ink pb-1"
                   >
-                    Reset Filters
+                    Reset All Filters
                   </button>
                 )}
               </div>
@@ -315,7 +346,7 @@ export default function App() {
           </div>
 
           <AnimatePresence>
-            {activeFilter && (
+            {(activeFilter === "region" || activeFilter === "type") && (
               <motion.div
                 initial={{ height: 0, opacity: 0 }}
                 animate={{ height: "auto", opacity: 1 }}
@@ -323,7 +354,10 @@ export default function App() {
                 className="overflow-hidden no-scrollbar"
               >
                 <div className="pb-16 pt-8 border-t border-line">
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-x-12 gap-y-6">
+                  <div className="flex justify-between items-center mb-12">
+                    <h2 className="micro-label font-black tracking-[0.2em] opacity-40">SELECT {activeFilter?.toUpperCase()}</h2>
+                  </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2">
                     {(activeFilter === "region" ? ["All", ...REGIONS.map(r => r.name)] : ["All", ...TYPE_LIST]).map((option) => (
                       <button
                         key={option}
@@ -332,22 +366,24 @@ export default function App() {
                           else setSelectedType(option as PokemonType | "All");
                           setActiveFilter(null);
                         }}
-                        className={`text-left text-[9px] font-bold uppercase tracking-[0.2em] transition-all flex items-center gap-3 py-1 group/opt ${
-                          (activeFilter === "region" ? selectedRegion : selectedType) === option ? "text-ink opacity-100" : "text-ink/30 hover:opacity-100"
+                        className={`text-left text-[10px] font-bold uppercase tracking-widest py-3 px-4 border transition-all flex items-center justify-between group/opt ${
+                          (activeFilter === "region" ? selectedRegion : selectedType) === option 
+                            ? "bg-ink/5 border-ink text-ink" 
+                            : "text-ink/60 border-line hover:border-ink hover:text-ink"
                         }`}
                       >
-                        <div className={`w-1 h-1 rounded-full transition-all ${((activeFilter === "region" ? selectedRegion : selectedType) === option) ? "bg-ink scale-125" : "bg-transparent group-hover/opt:bg-ink/30 scale-75"}`} />
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-3">
                           {activeFilter === "type" && option !== "All" && (
                             <img 
                               src={`${CLOUDFRONT_ASSETS_URL}/type-icons/${option.toLowerCase()}-type-icon.png`} 
                               alt={option}
-                              className="w-4 h-4 object-contain"
+                              className={`w-4 h-4 object-contain transition-all ${(activeFilter === "region" ? selectedRegion : selectedType) === option ? "saturate-100 opacity-100" : "saturate-[0.8] opacity-40 group-hover/opt:saturate-100 group-hover/opt:opacity-100"}`}
                               onError={(e) => (e.currentTarget.style.display = 'none')}
                             />
                           )}
                           <span>{option}</span>
                         </div>
+                        <div className={`w-1 h-1 rounded-full transition-all ${(activeFilter === "region" ? selectedRegion : selectedType) === option ? "bg-ink scale-125" : "bg-transparent group-hover/opt:bg-ink/30"}`} />
                       </button>
                     ))}
                   </div>
@@ -362,7 +398,7 @@ export default function App() {
           {sections ? (
             sections.map((section) => (
               <div key={section.name} className="relative">
-                <div className="sticky top-0 z-30 backdrop-blur-md border-b border-line py-4 px-6 flex justify-between items-center h-14">
+                <div className={`sticky ${showHeaderSticky ? "top-16" : "top-0"} z-20 backdrop-blur-md border-b border-line py-4 px-6 flex justify-between items-center h-14 transition-all duration-300`}>
                   <div className="flex items-center gap-4">
                     <div className="w-1 h-3 bg-ink" />
                     <span className="micro-label font-black tracking-[0.4em] text-ink text-[10px]">{section.name.toUpperCase()}</span>
@@ -440,6 +476,181 @@ export default function App() {
           <span className="text-[10px] font-mono opacity-20">EST. 2026 // VERSION 2.0</span>
         </div>
       </footer>
+
+      <AnimatePresence>
+        {showHeaderSticky && (
+          <motion.div
+            ref={stickyHeaderRef}
+            initial={{ y: -100 }}
+            animate={{ y: 0 }}
+            exit={{ y: -100 }}
+            transition={{ type: "spring", damping: 25, stiffness: 200 }}
+            className="fixed top-0 left-0 w-full z-50 bg-paper/80 dark:bg-ink/80 backdrop-blur-xl border-b border-line px-4 md:px-8 h-16 flex items-center justify-between gap-4 md:gap-8 shadow-lg"
+          >
+            {/* Title - Compact */}
+            <div className="flex-shrink-0">
+              <h2 className="text-xl font-display font-black tracking-tighter text-ink cursor-pointer" onClick={scrollToTop}>
+                nano.d3x
+              </h2>
+            </div>
+
+            {/* Search - Filling Space */}
+            <div className="flex-1 max-w-2xl flex items-center gap-4">
+              <div className="flex-1 relative group">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-ink/30 group-focus-within:text-ink transition-colors" size={14} />
+                <input
+                  ref={stickySearchInputRef}
+                  type="text"
+                  placeholder="Search Archive..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full bg-ink/5 dark:bg-paper/5 border border-line focus:border-ink pl-10 pr-10 py-2 focus:outline-none text-[13px] placeholder:opacity-30 text-ink transition-all"
+                />
+                <AnimatePresence>
+                  {searchQuery && (
+                    <motion.button
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.8 }}
+                      onClick={handleClearSearch}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 p-1 hover:bg-ink/10 rounded-full transition-colors"
+                    >
+                      <X size={12} className="text-ink/40" />
+                    </motion.button>
+                  )}
+                </AnimatePresence>
+              </div>
+
+              {/* Combined Filters Icon Button - Integrated with Search Bar visually */}
+              <div className="relative">
+                <button
+                  onClick={() => setActiveFilter(activeFilter === "combined-sticky" ? null : "combined-sticky")}
+                  className={`p-2 transition-all ${activeFilter === "combined-sticky" ? "text-ink scale-110" : "text-ink/40 hover:text-ink hover:scale-110"}`}
+                  title="Filters"
+                >
+                  <Filter size={18} />
+                </button>
+
+                <AnimatePresence>
+                  {activeFilter === "combined-sticky" && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                      className="fixed top-16 left-0 w-full bg-paper dark:bg-ink border-b border-line shadow-2xl p-8 z-50 overflow-y-auto max-h-[70vh] no-scrollbar flex justify-center"
+                    >
+                      <div className="w-full max-w-4xl space-y-12">
+                        <div className="flex justify-between items-center border-b border-line pb-4">
+                          <h2 className="micro-label font-black tracking-[0.2em] opacity-40">ARCHIVE FILTERS</h2>
+                          <button 
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleResetFilters();
+                            }}
+                            className="text-[10px] font-bold uppercase tracking-widest opacity-40 hover:opacity-100 transition-colors py-2 px-4"
+                          >
+                            Clear All
+                          </button>
+                        </div>
+
+                        <div className="grid md:grid-cols-2 gap-16">
+                          {/* Regions Section */}
+                          <div className="space-y-6">
+                            <h3 className="micro-label opacity-40">BY REGION</h3>
+                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                              {["All", ...REGIONS.map(r => r.name)].map((option) => (
+                                <button
+                                  key={option}
+                                  onClick={() => {
+                                    setSelectedRegion(option);
+                                    setActiveFilter(null);
+                                  }}
+                                  className={`text-left text-[10px] font-bold uppercase tracking-widest py-2 px-3 border transition-all ${
+                                    selectedRegion === option 
+                                      ? "bg-ink/5 border-ink text-ink" 
+                                      : "text-ink/60 border-line hover:border-ink hover:text-ink"
+                                  }`}
+                                >
+                                  {option}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+
+                          {/* Types Section */}
+                          <div className="space-y-6">
+                            <h3 className="micro-label opacity-40">BY TYPE</h3>
+                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                              {["All", ...TYPE_LIST].map((option) => (
+                                <button
+                                  key={option}
+                                  onClick={() => {
+                                    setSelectedType(option as PokemonType | "All");
+                                    setActiveFilter(null);
+                                  }}
+                                  className={`flex items-center gap-3 text-left text-[10px] font-bold uppercase tracking-widest py-2 px-3 border transition-all ${
+                                    selectedType === option 
+                                      ? "bg-ink/5 border-ink text-ink" 
+                                      : "text-ink/60 border-line hover:border-ink hover:text-ink"
+                                  }`}
+                                >
+                                  {option !== "All" && (
+                                    <img 
+                                      src={`${CLOUDFRONT_ASSETS_URL}/type-icons/${option.toLowerCase()}-type-icon.png`} 
+                                      alt={option}
+                                      className={`w-4 h-4 object-contain transition-all ${selectedType === option ? "saturate-100 opacity-100" : "saturate-[0.8] opacity-40"}`}
+                                      onError={(e) => (e.currentTarget.style.display = 'none')}
+                                    />
+                                  )}
+                                  <span>{option}</span>
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            </div>
+
+            {/* Actions & Modes */}
+            <div className="flex items-center gap-2">
+              <button 
+                onClick={() => setShinyMode(!shinyMode)}
+                className={`w-10 h-10 rounded-full border border-line transition-all flex items-center justify-center ${shinyMode ? "bg-ink text-paper border-ink" : "hover:border-ink text-ink"}`}
+                title={shinyMode ? "Classic Mode" : "Shiny Mode"}
+              >
+                <Sparkles size={16} />
+              </button>
+
+              <button 
+                onClick={() => setDarkMode(!darkMode)}
+                className="w-10 h-10 rounded-full border border-line hover:border-ink transition-all flex items-center justify-center text-ink"
+                title={darkMode ? "Light Mode" : "Dark Mode"}
+              >
+                {darkMode ? <Sun size={16} /> : <Moon size={16} />}
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {showBackToTop && (
+          <motion.button
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+            onClick={scrollToTop}
+            className="fixed bottom-12 right-12 z-40 w-12 h-12 bg-ink text-paper rounded-full shadow-2xl flex items-center justify-center group active:scale-95 transition-transform border border-paper/10"
+            title="Back to top"
+          >
+            <ArrowUp size={20} strokeWidth={2.5} className="group-hover:-translate-y-1 transition-transform" />
+          </motion.button>
+        )}
+      </AnimatePresence>
 
       <AnimatePresence>
         {selectedPokemonId && (

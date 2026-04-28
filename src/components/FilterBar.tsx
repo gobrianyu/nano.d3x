@@ -60,7 +60,7 @@ export default function FilterBar({
                 : "bg-white dark:bg-white/5 border border-black/5 dark:border-white/5 opacity-60 hover:opacity-100"
             }`}
           >
-            <Sparkles size={18} className={shinyMode ? "animate-pulse" : ""} />
+            <Sparkles size={18} />
             <span>Shiny Mode</span>
           </button>
           

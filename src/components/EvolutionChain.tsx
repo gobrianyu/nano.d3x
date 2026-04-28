@@ -41,7 +41,7 @@ function EvolutionNode({ id, shinyMode, onSelect, isCurrent }: EvolutionNodeProp
     const index = allForms.findIndex(f => {
       const formId = detail?.index === undefined ? detail?.["dex number"] : detail?.index;
       const key = f?.key || formId;
-      return Math.abs(key - id) < 0.0001;
+      return Math.abs(Number(key) - id) < 0.0001;
     });
     return index !== -1 ? allForms[index] : allForms[0];
   }, [allForms, id, detail]);
@@ -122,7 +122,7 @@ export default function EvolutionChain({ shinyMode, onSelect, currentId }: Evolu
           const index = allForms.findIndex(f => {
             const formId = detail.index === undefined ? detail["dex number"] : detail.index;
             const key = f?.key || formId;
-            return Math.abs(key - fullId) < 0.0001;
+            return Math.abs(Number(key) - fullId) < 0.0001;
           });
           
           const targetIndex = index !== -1 ? index : 0;

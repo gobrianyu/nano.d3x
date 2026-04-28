@@ -43,6 +43,7 @@ export interface PokemonForm {
 
 export interface PokemonDetail {
   "dex number": number;
+  index?: number;
   forms: PokemonForm[];
   "gimmick forms": PokemonForm[];
   "experience group": string;
