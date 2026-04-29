@@ -70,8 +70,8 @@ export default function PokemonModal({ initialId, initialFormIndex = 0, onClose,
   }, []);
 
   const { data: detail, isLoading: loading, error: fetchError } = useQuery<PokemonDetail>({
-    queryKey: ["pokemonDetail", id],
-    queryFn: () => cachedFetch(`${BASE_DATA_URL}/pokemon/${id}.json`),
+    queryKey: ["pokemonDetail", Math.floor(id)],
+    queryFn: () => cachedFetch(`${BASE_DATA_URL}/pokemon/${Math.floor(id)}.json`),
     staleTime: 1000 * 60 * 30, // 30 minutes
     enabled: !!id,
   });
@@ -131,7 +131,7 @@ export default function PokemonModal({ initialId, initialFormIndex = 0, onClose,
             <p className="micro-label opacity-40">Entry Corrupted or Incomplete</p>
             <p className="text-xs opacity-60">The species data for #{id} could not be fully reconstructed.</p>
           </div>
-          <button onClick={onClose} className="micro-label px-8 py-3 border border-line hover:bg-ink hover:text-paper transition-colors">Close</button>
+          <button onClick={onClose} className="micro-label px-8 py-3 border border-line cursor-pointer hover:bg-ink hover:text-paper transition-colors">Close</button>
         </div>
       </div>
     );
@@ -161,32 +161,46 @@ export default function PokemonModal({ initialId, initialFormIndex = 0, onClose,
 
   // Navigation logic
   const handleNext = () => {
-    setDirection(1);
-    setCurrentIndex(prev => (prev + 1) % gallery.length);
+    if (currentIndex < gallery.length - 1) {
+      setDirection(1);
+      setCurrentIndex(prev => prev + 1);
+    }
   };
   const handlePrev = () => {
-    setDirection(-1);
-    setCurrentIndex(prev => (prev - 1 + gallery.length) % gallery.length);
+    if (currentIndex > 0) {
+      setDirection(-1);
+      setCurrentIndex(prev => prev - 1);
+    }
   };
 
   const handleFormSelect = (idx: number) => {
-    setGallery(prev => prev.map((item, i) => i === currentIndex ? { ...item, matchedFormIndex: idx } : item));
+    const newForm = allForms[idx];
+    if (!newForm || !detail) return;
+    
+    const baseId = detail.index === undefined ? detail["dex number"] : detail.index;
+    const newId = Number(newForm.key || baseId);
+    
+    setGallery(prev => prev.map((item, i) => i === currentIndex ? { ...item, id: newId, matchedFormIndex: idx } : item));
+    setCurrentFormIndex(idx);
   };
 
   const handleJumpToPokemon = (targetId: number) => {
     const dexId = Math.floor(targetId);
     const formIndex = Math.round((targetId % 1) * 100);
 
-    const existingIdx = gallery.findIndex(item => item.id === dexId);
+    const existingIdx = gallery.findIndex(item => Math.floor(item.id) === dexId);
     if (existingIdx !== -1) {
-      setGallery(prev => prev.map((item, i) => i === existingIdx ? { ...item, matchedFormIndex: formIndex } : item));
+      setGallery(prev => prev.map((item, i) => i === existingIdx ? { ...item, id: targetId, matchedFormIndex: formIndex } : item));
       setCurrentIndex(existingIdx);
+      if (existingIdx === currentIndex) {
+        setCurrentFormIndex(formIndex);
+      }
     } else {
       // Insert and sort
-      const newItem = { id: dexId, matchedFormIndex: formIndex };
+      const newItem = { id: targetId, matchedFormIndex: formIndex };
       const newGallery = [...gallery, newItem].sort((a, b) => a.id - b.id);
       setGallery(newGallery);
-      setCurrentIndex(newGallery.findIndex(item => item.id === dexId));
+      setCurrentIndex(newGallery.findIndex(item => item.id === targetId));
     }
   };
 
@@ -253,7 +267,7 @@ export default function PokemonModal({ initialId, initialFormIndex = 0, onClose,
   }
 
   return (
-    <div className={`fixed inset-0 z-50 flex items-center justify-center modal-overlay overflow-y-auto ${isNarrow ? "p-4" : "p-4 md:p-8"}`} onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center modal-overlay overflow-y-auto overflow-x-hidden p-2 md:p-4" onClick={onClose}>
       {/* Background Dimmer */}
       <motion.div 
         initial={{ opacity: 0 }} 
@@ -261,31 +275,49 @@ export default function PokemonModal({ initialId, initialFormIndex = 0, onClose,
         exit={{ opacity: 0 }} 
         className="fixed inset-0 bg-neutral-900/60 backdrop-blur-[2px]" 
       />
-
-      <div className="relative flex flex-col items-center gap-6 w-full max-w-[min(1920px,95vw)] pointer-events-none z-10 m-auto">
-        <AnimatePresence mode="popLayout" initial={false}>
+ 
+      <div className="relative flex flex-col items-center gap-3 w-full max-w-[min(1920px,98vw)] pointer-events-none z-10 m-auto">
+        <AnimatePresence mode="popLayout" initial={false} custom={direction}>
           <motion.div 
-            key={id}
-            initial={{ x: direction * 100, opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            exit={{ x: -direction * 100, opacity: 0 }}
-            transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+            key={Math.floor(id)}
+            custom={direction}
+            variants={{
+              enter: (dir: number) => ({
+                x: dir > 0 ? "100%" : "-100%",
+                opacity: 0,
+              }),
+              center: {
+                x: 0,
+                opacity: 1,
+              },
+              exit: (dir: number) => ({
+                x: dir < 0 ? "100%" : "-100%",
+                opacity: 0,
+              })
+            }}
+            initial="enter"
+            animate="center"
+            exit="exit"
+            transition={{
+              x: { type: "spring", stiffness: 300, damping: 32, mass: 1 },
+              opacity: { duration: 0.3 }
+            }}
             onClick={(e) => e.stopPropagation()}
-            drag={isPortrait ? false : "x"}
+            drag="x"
             dragConstraints={{ left: 0, right: 0 }}
             dragElastic={0.2}
             onDragEnd={onDragEnd}
             className={`bg-paper shadow-2xl overflow-hidden relative flex z-10 text-ink border border-line pointer-events-auto transition-all duration-300 ${
               isPortrait 
-                ? "flex-col w-[min(90vw,calc(88vh*0.5))] h-auto aspect-[1/2]" 
-                : `md:flex-row aspect-[5/3] ${isNarrow ? "w-[min(92vw,calc(85vh*5/3))]" : "w-[min(95vw,calc(92vh*5/3))]"}`
+                ? "flex-col w-[min(94vw,calc(max(600px,100vh-140px)*0.5))] h-auto aspect-[1/2]" 
+                : `md:flex-row aspect-[5/3] w-[min(98vw,calc(max(500px,100vh-120px)*5/3))]`
             }`}
           >
             {/* Global Floating Close Button */}
             <div className="absolute top-6 right-6 z-50 pointer-events-none">
               <button 
                 onClick={onClose}
-                className="pointer-events-auto bg-paper border border-line px-3 py-1.5 micro-label hover:bg-ink hover:text-paper transition-all shadow-sm"
+                className="pointer-events-auto cursor-pointer bg-paper border border-line px-3 py-1.5 micro-label hover:bg-ink hover:text-paper transition-all shadow-sm"
               >
                 Close
               </button>
@@ -303,13 +335,14 @@ export default function PokemonModal({ initialId, initialFormIndex = 0, onClose,
                   </div>
                   <div className="flex items-baseline gap-2 overflow-visible min-w-0 w-full">
                      <Textfit 
-                      mode="single" 
-                      max={40} 
-                      min={16}
-                      className="font-display font-black tracking-tighter leading-[0.9] pb-1 whitespace-nowrap w-full"
-                    >
-                      {form.name}
-                    </Textfit>
+                      {...({
+                        mode: "single",
+                        max: 40, 
+                        min: 16,
+                        className: "font-display font-black tracking-tighter leading-[0.9] pb-1 whitespace-nowrap w-full",
+                        children: form.name
+                      } as any)}
+                    />
                   </div>
                 </div>
               )}
@@ -461,13 +494,14 @@ export default function PokemonModal({ initialId, initialFormIndex = 0, onClose,
                   <div className="flex flex-col gap-4 min-w-0">
                     <div className="flex flex-col min-w-0 max-w-full">
                       <Textfit 
-                        mode="single" 
-                        max={80} 
-                        min={20}
-                        className="font-display font-black tracking-tighter leading-[0.85] pb-4 whitespace-nowrap"
-                      >
-                        {form.name}
-                      </Textfit>
+                        {...({
+                          mode: "single",
+                          max: 80,
+                          min: 20,
+                          className: "font-display font-black tracking-tighter leading-[0.85] pb-4 whitespace-nowrap",
+                          children: form.name
+                        } as any)}
+                      />
 
                       {form["special form"] && (
                         <span className="micro-label opacity-40 italic">
@@ -586,17 +620,27 @@ export default function PokemonModal({ initialId, initialFormIndex = 0, onClose,
 
         {/* Archive Navigation PILL - Positioned below the box */}
         {gallery.length > 1 && (
-          <div className="flex items-center bg-paper/90 backdrop-blur-md border border-line rounded-full px-8 py-3 shadow-xl pointer-events-auto my-4">
+          <div className="flex items-center bg-paper/90 backdrop-blur-md border border-line rounded-full shadow-xl pointer-events-auto my-2 overflow-hidden">
             <button 
+              disabled={currentIndex === 0}
               onClick={(e) => { e.stopPropagation(); handlePrev(); }}
-              className="flex items-center gap-3 micro-label text-ink/60 hover:text-ink transition-colors active:scale-95"
+              className={`flex items-center gap-3 px-8 py-3 micro-label transition-all active:scale-95 ${
+                currentIndex === 0 
+                  ? "opacity-10" 
+                  : "text-ink/60 hover:text-ink hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer"
+              }`}
             >
               <ChevronLeft size={14} /> <span className="font-bold tracking-[0.2em] text-[10px]">PREV</span>
             </button>
-            <div className="mx-6 w-px h-3 bg-line" />
+            <div className="w-px h-4 bg-line" />
             <button 
+              disabled={currentIndex === gallery.length - 1}
               onClick={(e) => { e.stopPropagation(); handleNext(); }}
-              className="flex items-center gap-3 micro-label text-ink/60 hover:text-ink transition-colors active:scale-95"
+              className={`flex items-center gap-3 px-8 py-3 micro-label transition-all active:scale-95 ${
+                currentIndex === gallery.length - 1 
+                  ? "opacity-10" 
+                  : "text-ink/60 hover:text-ink hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer"
+              }`}
             >
               <span className="font-bold tracking-[0.2em] text-[10px]">NEXT</span> <ChevronRight size={14} />
             </button>

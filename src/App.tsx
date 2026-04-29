@@ -254,7 +254,7 @@ export default function App() {
                   <p className="text-sm md:text-base font-medium tracking-wider opacity-60 ml-1">
                     A Pokédex by <a href="https://www.instagram.com/nano.m0n" target="_blank" rel="noopener noreferrer" className="hover:text-ink transition-colors underline underline-offset-2 decoration-line">@nano.m0n</a>
                   </p>
-                  <p className="text-[10px] font-mono tracking-widest opacity-30 ml-1 uppercase">Visual Archiving Project // Vol. 02</p>
+                  <p className="text-[10px] font-mono tracking-widest opacity-30 ml-1 uppercase">Artist Portfolio // Vol. 02</p>
                 </div>
               </div>
             </div>
@@ -267,7 +267,7 @@ export default function App() {
                   <span className="text-2xl font-display font-black tracking-tight">--<span className="text-sm opacity-20 ml-1">/ {targetTotal}</span></span>
                 </div>
                 <div className="flex flex-col gap-1">
-                  <span className="micro-label opacity-40">FORMS DISCOVERED</span>
+                  <span className="micro-label opacity-40">FORMS REGISTERED</span>
                   <span className="text-2xl font-display font-black tracking-tight">--<span className="text-sm opacity-20 ml-1">/ {totalFormsCount}</span></span>
                 </div>
               </div>
@@ -282,13 +282,13 @@ export default function App() {
                 <div className="flex items-center gap-4 bg-ink/5 p-1 rounded-full border border-line">
                   <button 
                     onClick={() => setShinyMode(false)}
-                    className={`px-4 py-1.5 rounded-full micro-label transition-all ${!shinyMode ? "bg-paper text-ink shadow-sm" : "opacity-40 hover:opacity-100"}`}
+                    className={`px-4 py-1.5 cursor-pointer rounded-full micro-label transition-all ${!shinyMode ? "bg-paper text-ink shadow-sm" : "opacity-40 hover:opacity-100"}`}
                   >
                     Classic
                   </button>
                   <button 
                     onClick={() => setShinyMode(true)}
-                    className={`px-4 py-1.5 rounded-full micro-label transition-all ${shinyMode ? "bg-paper text-ink shadow-sm" : "opacity-40 hover:opacity-100"}`}
+                    className={`px-4 py-1.5 cursor-pointer rounded-full micro-label transition-all ${shinyMode ? "bg-paper text-ink shadow-sm" : "opacity-40 hover:opacity-100"}`}
                   >
                     Shiny
                   </button>
@@ -298,10 +298,10 @@ export default function App() {
               {/* Form Expansion Placeholders */}
               <div className="flex items-center gap-8">
                 <div className="h-4 w-px bg-line" />
-                <button className="micro-label opacity-20 cursor-not-allowed flex items-center gap-2 group/btn" disabled>
+                <button className="micro-label opacity-20 flex items-center gap-2 group/btn" disabled>
                   <span>MEGA EVOLUTIONS</span>
                 </button>
-                <button className="micro-label opacity-20 cursor-not-allowed flex items-center gap-2 group/btn" disabled>
+                <button className="micro-label opacity-20 flex items-center gap-2 group/btn" disabled>
                   <span>GIGANTAMAX</span>
                 </button>
               </div>
@@ -310,7 +310,7 @@ export default function App() {
             {/* Global Theme Toggle */}
             <button 
               onClick={() => setDarkMode(!darkMode)}
-              className="flex items-center gap-3 micro-label transition-all opacity-40 hover:opacity-100 group"
+              className="flex cursor-pointer items-center gap-3 micro-label transition-all opacity-40 hover:opacity-100 group"
             >
               <div className="w-10 h-10 rounded-full border border-line flex items-center justify-center group-hover:border-ink transition-colors">
                 {darkMode ? <Sun size={14} /> : <Moon size={14} />}
@@ -323,7 +323,7 @@ export default function App() {
       <div className="flex flex-col gap-16" ref={filterSectionRef}>
         <div className="flex flex-col gap-0 border-b border-line">
           <div className="flex flex-col lg:flex-row gap-12 items-start lg:items-end justify-between pb-4">
-            <div className="flex flex-col md:flex-row gap-12 flex-1 w-full items-center md:items-center">
+            <div className="flex flex-col md:flex-row gap-12 flex-1 w-full items-center md:items-center justify-between">
               <div className="relative group w-full max-w-md">
                 <Search className="absolute left-0 top-1/2 -translate-y-1/2 text-ink/30 group-focus-within:text-ink transition-colors" size={16} />
                 <input
