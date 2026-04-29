@@ -8,7 +8,7 @@ import EvolutionChain from "./EvolutionChain";
 import { useQuery } from "@tanstack/react-query";
 import { cachedFetch } from "../lib/cacheService";
 import { useImage } from "../lib/useImage";
-import { Textfit } from "react-textfit";
+import { Textfit } from "@dalee9000/react19-ts-textfit";
 
 interface GalleryItem {
   id: number;
