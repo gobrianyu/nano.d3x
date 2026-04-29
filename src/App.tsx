@@ -213,62 +213,117 @@ export default function App() {
   const totalCompleted = indexData.length;
   const targetTotal = 1025;
 
+  const totalFormsCount = useMemo(() => {
+    let count = 0;
+    indexData.forEach(p => {
+      const detail = queryClient.getQueryData<PokemonDetail>(["pokemonDetail", p.id]);
+      if (detail) {
+        count += (detail.forms?.length || 0) + (detail["gimmick forms"]?.length || 0);
+      } else {
+        count += 1; // Default to 1 species = 1 form until loaded
+      }
+    });
+    return count;
+  }, [indexData, lastDetailFetchTime, queryClient]);
+
   return (
     <div className={`${darkMode ? "dark" : ""} min-h-screen flex flex-col p-8 md:p-16 lg:p-24 pb-48 md:pb-64 selection:bg-rose-100 text-ink bg-paper transition-colors`}>
-      {/* Header - Editorial Style */}
-      <header className="flex flex-col md:flex-row md:items-end justify-between gap-12 mb-32">
-        <div className="space-y-6">
-          <div className="space-y-2">
-            <h1 className="text-7xl md:text-9xl font-display font-black tracking-[-0.05em] leading-[0.8] text-ink drop-shadow-sm dark:drop-shadow-[0_2px_20px_rgba(255,255,255,0.15)]">
-              nano.d3x
-            </h1>
-            <p className="text-sm md:text-base font-medium tracking-wider opacity-60 ml-1">
-              A Pokédex by <a href="https://www.instagram.com/nano.m0n" target="_blank" rel="noopener noreferrer" style={{ color: "inherit", textDecoration: "underline", textUnderlineOffset: "2px"}}>@nano.m0n</a>
-            </p>
+      {/* Header - Reorganized Editorial Style */}
+      <header className="relative mb-32">
+        <div className="relative">
+          {/* Banner Image - Constrained to top section */}
+          <div className="absolute inset-0 -mx-8 md:-mx-16 lg:-mx-24 -mt-10 md:-mt-20 lg:-mt-24 pointer-events-none overflow-hidden opacity-60 z-0">
+            <div 
+              className="w-full h-full"
+              style={{ 
+                backgroundImage: 'url(https://d1nt34i9nvab8r.cloudfront.net/banner.png)', 
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                backgroundRepeat: 'no-repeat'
+              }} 
+            />
           </div>
-          <div className="flex flex-wrap items-center gap-6 pl-1 micro-label">
-            <span>Art Portfolio 002</span>
-            <span className="opacity-20">/</span>
-            <span className="text-ink">{indexData.length} Registered</span>
+
+          <div className="relative z-10 flex flex-col md:flex-row md:items-end justify-between gap-12 pb-12">
+            <div className="space-y-6">
+              <div className="space-y-2">
+                <h1 className="text-7xl md:text-9xl font-display font-black tracking-[-0.05em] leading-[0.8] text-ink drop-shadow-sm dark:drop-shadow-[0_2px_20px_rgba(255,255,255,0.15)]">
+                  nano.d3x
+                </h1>
+                <div className="flex flex-col gap-1">
+                  <p className="text-sm md:text-base font-medium tracking-wider opacity-60 ml-1">
+                    A Pokédex by <a href="https://www.instagram.com/nano.m0n" target="_blank" rel="noopener noreferrer" className="hover:text-ink transition-colors underline underline-offset-2 decoration-line">@nano.m0n</a>
+                  </p>
+                  <p className="text-[10px] font-mono tracking-widest opacity-30 ml-1 uppercase">Visual Archiving Project // Vol. 02</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex flex-col items-start md:items-end gap-6">
+              {/* Analytics / Counters */}
+              <div className="flex gap-12">
+                <div className="flex flex-col gap-1">
+                  <span className="micro-label opacity-40">SPECIES REGISTERED</span>
+                  <span className="text-2xl font-display font-black tracking-tight">--<span className="text-sm opacity-20 ml-1">/ {targetTotal}</span></span>
+                </div>
+                <div className="flex flex-col gap-1">
+                  <span className="micro-label opacity-40">FORMS DISCOVERED</span>
+                  <span className="text-2xl font-display font-black tracking-tight">--<span className="text-sm opacity-20 ml-1">/ {totalFormsCount}</span></span>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
-        <div className="flex flex-wrap gap-10 items-center">
-          {/* Shiny/Classic Toggle */}
-          <div className="flex items-center gap-8 px-1">
+        <div className="relative z-10 flex flex-wrap items-center justify-between gap-x-12 gap-y-8 pt-8 border-t border-line">
+            <div className="flex flex-wrap items-center gap-x-12 gap-y-6">
+              {/* Core View Modes */}
+              <div className="flex items-center gap-6">
+                <div className="flex items-center gap-4 bg-ink/5 p-1 rounded-full border border-line">
+                  <button 
+                    onClick={() => setShinyMode(false)}
+                    className={`px-4 py-1.5 rounded-full micro-label transition-all ${!shinyMode ? "bg-paper text-ink shadow-sm" : "opacity-40 hover:opacity-100"}`}
+                  >
+                    Classic
+                  </button>
+                  <button 
+                    onClick={() => setShinyMode(true)}
+                    className={`px-4 py-1.5 rounded-full micro-label transition-all ${shinyMode ? "bg-paper text-ink shadow-sm" : "opacity-40 hover:opacity-100"}`}
+                  >
+                    Shiny
+                  </button>
+                </div>
+              </div>
+
+              {/* Form Expansion Placeholders */}
+              <div className="flex items-center gap-8">
+                <div className="h-4 w-px bg-line" />
+                <button className="micro-label opacity-20 cursor-not-allowed flex items-center gap-2 group/btn" disabled>
+                  <span>MEGA EVOLUTIONS</span>
+                </button>
+                <button className="micro-label opacity-20 cursor-not-allowed flex items-center gap-2 group/btn" disabled>
+                  <span>GIGANTAMAX</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Global Theme Toggle */}
             <button 
-              onClick={() => setShinyMode(false)}
-              className={`micro-label transition-all pb-1 border-b-2 ${!shinyMode ? "text-ink border-ink opacity-100" : "opacity-30 border-transparent hover:opacity-100"}`}
+              onClick={() => setDarkMode(!darkMode)}
+              className="flex items-center gap-3 micro-label transition-all opacity-40 hover:opacity-100 group"
             >
-              Classic
-            </button>
-            <button 
-              onClick={() => setShinyMode(true)}
-              className={`micro-label transition-all pb-1 border-b-2 ${shinyMode ? "text-ink border-ink opacity-100" : "opacity-30 border-transparent hover:opacity-100"}`}
-            >
-              Shiny
+              <div className="w-10 h-10 rounded-full border border-line flex items-center justify-center group-hover:border-ink transition-colors">
+                {darkMode ? <Sun size={14} /> : <Moon size={14} />}
+              </div>
             </button>
           </div>
-
-          {/* Theme Toggle */}
-          <button 
-            onClick={() => setDarkMode(!darkMode)}
-            className="w-12 h-12 rounded-full border border-line hover:border-ink transition-all flex items-center justify-center text-ink group"
-          >
-            {darkMode ? (
-              <Sun size={18} className="group-hover:rotate-45 transition-transform" />
-            ) : (
-              <Moon size={18} className="group-hover:-rotate-12 transition-transform" />
-            )}
-          </button>
-        </div>
       </header>
 
       {/* Navigation & Search - Minimal Rail */}
       <div className="flex flex-col gap-16" ref={filterSectionRef}>
         <div className="flex flex-col gap-0 border-b border-line">
-          <div className="flex flex-col lg:flex-row gap-12 items-start lg:items-end justify-between pb-12">
-            <div className="flex flex-col md:flex-row gap-12 flex-1 w-full items-start md:items-end">
+          <div className="flex flex-col lg:flex-row gap-12 items-start lg:items-end justify-between pb-4">
+            <div className="flex flex-col md:flex-row gap-12 flex-1 w-full items-center md:items-center">
               <div className="relative group w-full max-w-md">
                 <Search className="absolute left-0 top-1/2 -translate-y-1/2 text-ink/30 group-focus-within:text-ink transition-colors" size={16} />
                 <input
@@ -338,7 +393,7 @@ export default function App() {
                     }}
                     className="micro-label text-ink hover:text-ink/60 transition-all border-b border-line hover:border-ink pb-1"
                   >
-                    Reset All Filters
+                    Reset All
                   </button>
                 )}
               </div>
@@ -377,7 +432,7 @@ export default function App() {
                             <img 
                               src={`${CLOUDFRONT_ASSETS_URL}/type-icons/${option.toLowerCase()}-type-icon.png`} 
                               alt={option}
-                              className={`w-4 h-4 object-contain transition-all ${(activeFilter === "region" ? selectedRegion : selectedType) === option ? "saturate-100 opacity-100" : "saturate-[0.8] opacity-40 group-hover/opt:saturate-100 group-hover/opt:opacity-100"}`}
+                              className={`w-4 h-4 object-contain transition-all ${selectedType === option ? "saturate-100 opacity-100" : "saturate-[0.8] opacity-40 group-hover/opt:saturate-100 group-hover/opt:opacity-100"}`}
                               onError={(e) => (e.currentTarget.style.display = 'none')}
                             />
                           )}
@@ -454,7 +509,7 @@ export default function App() {
         {filteredIndex.length === 0 && !loading && (
           <div className="py-60 flex flex-col items-center justify-center text-center space-y-6">
             <HelpCircle size={40} strokeWidth={1} className="opacity-20" />
-            <p className="text-ink/40 text-xs uppercase tracking-[0.4em] font-medium">Record not found in current archive</p>
+            <p className="text-ink/40 text-xs uppercase tracking-[0.4em] font-medium">No records found</p>
           </div>
         )}
       </div>
@@ -501,7 +556,7 @@ export default function App() {
                 <input
                   ref={stickySearchInputRef}
                   type="text"
-                  placeholder="Search Archive..."
+                  placeholder="Search..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full bg-ink/5 dark:bg-paper/5 border border-line focus:border-ink pl-10 pr-10 py-2 focus:outline-none text-[13px] placeholder:opacity-30 text-ink transition-all"
@@ -534,14 +589,14 @@ export default function App() {
                 <AnimatePresence>
                   {activeFilter === "combined-sticky" && (
                     <motion.div
-                      initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                      className="fixed top-16 left-0 w-full bg-paper border-b border-line shadow-2xl p-8 z-50 overflow-y-auto max-h-[70vh] no-scrollbar flex justify-center"
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 10 }}
+                      className="fixed top-16 left-0 w-full bg-paper border-b border-line shadow-2xl p-8 z-50 overflow-y-auto h-[calc(100dvh-4rem)] md:h-auto md:max-h-[70vh] no-scrollbar flex justify-center"
                     >
-                      <div className="w-full max-w-4xl space-y-12">
+                      <div className="w-full max-w-4xl space-y-12 pb-24">
                         <div className="flex justify-between items-center border-b border-line pb-4">
-                          <h2 className="micro-label font-black tracking-[0.2em] opacity-40">ARCHIVE FILTERS</h2>
+                          <h2 className="micro-label font-black tracking-[0.2em] opacity-40">FILTERS</h2>
                           <button 
                             onClick={(e) => {
                               e.stopPropagation();
