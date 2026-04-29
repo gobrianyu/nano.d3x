@@ -40,9 +40,7 @@ export default function PokemonModal({ initialId, initialFormIndex = 0, onClose,
     return idx !== -1 ? idx : 0;
   });
 
-  const [direction, setDirection] = useState(0); // -1 for left, 1 for right
-
-  const currentItem = gallery[currentIndex];
+  const currentItem = gallery[currentIndex] || gallery[0];
   const id = currentItem?.id;
 
   const [gender, setGender] = useState<"m" | "f">("m");
@@ -95,26 +93,25 @@ export default function PokemonModal({ initialId, initialFormIndex = 0, onClose,
 
   const regularFormsCount = detail?.forms?.length || 0;
   
-  const [currentFormIndex, setCurrentFormIndex] = useState(0);
-
-  // Sync index when detail or initial ID changes
-  useEffect(() => {
-    if (detail && allForms.length > 0) {
-      const index = allForms.findIndex(f => {
-        const formId = detail.index === undefined ? detail["dex number"] : detail.index;
-        const key = f?.key || formId;
-        // Use a slightly larger epsilon for safer floating point comparison
-        return Math.abs(Number(key) - id) < 0.0001;
-      });
-      
-      if (index !== -1) {
-        setCurrentFormIndex(index);
-      } else {
-        // Fallback to base form if specific ID isn't found
-        setCurrentFormIndex(0);
-      }
-    }
-  }, [detail, id, allForms]);
+  // Derive currentFormIndex directly from ID and available forms
+  const currentFormIndex = useMemo(() => {
+    if (!detail || allForms.length === 0) return 0;
+    
+    // Try to find form matching current ID
+    const matchedIndex = allForms.findIndex(f => {
+      const formId = detail.index === undefined ? detail["dex number"] : detail.index;
+      const key = f?.key || formId;
+      return Math.abs(Number(key) - id) < 0.0001;
+    });
+    
+    if (matchedIndex !== -1) return matchedIndex;
+    
+    // Fallback to gallery's stored index if valid
+    const storedIdx = currentItem?.matchedFormIndex || 0;
+    if (storedIdx < allForms.length) return storedIdx;
+    
+    return 0;
+  }, [allForms, detail, id, currentItem]);
 
   const form = allForms[currentFormIndex];
   const isGimmick = currentFormIndex >= regularFormsCount;
@@ -162,14 +159,22 @@ export default function PokemonModal({ initialId, initialFormIndex = 0, onClose,
   // Navigation logic
   const handleNext = () => {
     if (currentIndex < gallery.length - 1) {
-      setDirection(1);
       setCurrentIndex(prev => prev + 1);
     }
   };
   const handlePrev = () => {
     if (currentIndex > 0) {
-      setDirection(-1);
       setCurrentIndex(prev => prev - 1);
+    }
+  };
+
+  // Drag constraints and handlers for swipe
+  const dragThreshold = 50;
+  const onDragEnd = (event: any, info: any) => {
+    if (info.offset.x < -dragThreshold) {
+      handleNext();
+    } else if (info.offset.x > dragThreshold) {
+      handlePrev();
     }
   };
 
@@ -181,7 +186,6 @@ export default function PokemonModal({ initialId, initialFormIndex = 0, onClose,
     const newId = Number(newForm.key || baseId);
     
     setGallery(prev => prev.map((item, i) => i === currentIndex ? { ...item, id: newId, matchedFormIndex: idx } : item));
-    setCurrentFormIndex(idx);
   };
 
   const handleJumpToPokemon = (targetId: number) => {
@@ -192,25 +196,13 @@ export default function PokemonModal({ initialId, initialFormIndex = 0, onClose,
     if (existingIdx !== -1) {
       setGallery(prev => prev.map((item, i) => i === existingIdx ? { ...item, id: targetId, matchedFormIndex: formIndex } : item));
       setCurrentIndex(existingIdx);
-      if (existingIdx === currentIndex) {
-        setCurrentFormIndex(formIndex);
-      }
     } else {
       // Insert and sort
       const newItem = { id: targetId, matchedFormIndex: formIndex };
       const newGallery = [...gallery, newItem].sort((a, b) => a.id - b.id);
       setGallery(newGallery);
-      setCurrentIndex(newGallery.findIndex(item => item.id === targetId));
-    }
-  };
-
-  // Drag constraints and handlers for swipe
-  const dragThreshold = 50;
-  const onDragEnd = (event: any, info: any) => {
-    if (info.offset.x < -dragThreshold) {
-      handleNext();
-    } else if (info.offset.x > dragThreshold) {
-      handlePrev();
+      const newIdx = newGallery.findIndex(item => item.id === targetId);
+      if (newIdx !== -1) setCurrentIndex(newIdx);
     }
   };
 
@@ -277,30 +269,15 @@ export default function PokemonModal({ initialId, initialFormIndex = 0, onClose,
       />
  
       <div className="relative flex flex-col items-center gap-3 w-full max-w-[min(1920px,98vw)] pointer-events-none z-10 m-auto">
-        <AnimatePresence mode="popLayout" initial={false} custom={direction}>
+        <AnimatePresence mode="popLayout" initial={false}>
           <motion.div 
             key={Math.floor(id)}
-            custom={direction}
-            variants={{
-              enter: (dir: number) => ({
-                x: dir > 0 ? "100%" : "-100%",
-                opacity: 0,
-              }),
-              center: {
-                x: 0,
-                opacity: 1,
-              },
-              exit: (dir: number) => ({
-                x: dir < 0 ? "100%" : "-100%",
-                opacity: 0,
-              })
-            }}
-            initial="enter"
-            animate="center"
-            exit="exit"
+            initial={{ opacity: 0, scale: 0.98 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 1.02 }}
             transition={{
-              x: { type: "spring", stiffness: 300, damping: 32, mass: 1 },
-              opacity: { duration: 0.3 }
+              duration: 0.3,
+              ease: [0.16, 1, 0.3, 1]
             }}
             onClick={(e) => e.stopPropagation()}
             drag="x"
