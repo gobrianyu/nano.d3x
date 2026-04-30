@@ -55,16 +55,16 @@ function EvolutionNode({ id, shinyMode, onSelect, isCurrent }: EvolutionNodeProp
   const { src: cachedImageUrl, loading: imgLoading, error: imgError } = useImage(imageUrl, !!form);
 
   return (
-    <div className="flex flex-col items-center gap-2 group/node">
+    <div className="flex flex-col items-center gap-1.5 group/node">
       <button
         onClick={() => onSelect(id)}
-        className={`relative w-12 h-12 sm:w-16 sm:h-16 rounded-none flex items-center justify-center border transition-all shrink-0 p-1.5 ${
+        className={`relative w-14 h-14 sm:w-20 sm:h-20 rounded-none flex items-center justify-center border transition-all shrink-0 p-1.5 ${
           isCurrent 
             ? "bg-paper border-ink scale-110 z-10" 
             : "bg-ink/[0.02] border-line hover:bg-ink/[0.05]"
         }`}
       >
-        <div className="absolute top-0.5 left-0.5 text-[5px] font-mono opacity-60 font-bold tracking-tighter bg-paper text-ink px-0.5 border border-line">
+        <div className="absolute top-1 left-1 text-[6px] sm:text-[7px] font-mono opacity-60 font-bold tracking-tighter bg-paper text-ink px-1 border border-line">
           #{String(dexId).padStart(4, "0")}
         </div>
         
@@ -75,12 +75,12 @@ function EvolutionNode({ id, shinyMode, onSelect, isCurrent }: EvolutionNodeProp
             src={cachedImageUrl || null}
             alt={pokemonName}
             referrerPolicy="no-referrer"
-            className={`w-10 h-10 sm:w-12 sm:h-12 object-contain transition-all duration-300 ${imgLoading || isLoading ? "opacity-0" : "opacity-100 group-hover/node:scale-110"}`}
+            className={`w-11 h-11 sm:w-16 sm:h-16 object-contain transition-all duration-300 ${imgLoading || isLoading ? "opacity-0" : "opacity-100 group-hover/node:scale-110"}`}
           />
         )}
       </button>
-      <span className="text-[7px] micro-label group-hover/node:text-ink transition-all text-center max-w-[60px] flex flex-col items-center">
-        <span className="break-words line-clamp-1">{pokemonName}</span>
+      <span className="text-[8px] sm:text-[9px] micro-label group-hover/node:text-ink transition-all text-center max-w-[70px] sm:max-w-[80px] flex flex-col items-center leading-tight">
+        <span className="break-words line-clamp-2">{pokemonName}</span>
         {form?.["special form"] && (
           <span className="opacity-50 text-[7px] truncate font-normal">({form["special form"]})</span>
         )}
@@ -179,7 +179,7 @@ export default function EvolutionChain({ shinyMode, onSelect, currentId }: Evolu
   // Recursive render for the tree
   const renderBranch = (node: ChainNode) => {
     return (
-      <div className="flex items-center gap-4">
+      <div className="flex items-start gap-3">
         <EvolutionNode 
           id={node.id} 
           shinyMode={shinyMode} 
@@ -188,9 +188,13 @@ export default function EvolutionChain({ shinyMode, onSelect, currentId }: Evolu
         />
         
         {node.next.length > 0 && (
-          <div className="flex items-center gap-2">
-            <ChevronRight size={14} className="opacity-10 shrink-0" />
-            <div className="flex flex-col gap-6">
+          <div className="flex items-start gap-1">
+            {/* Arrow - Centered on image size (h-14 on mobile, h-20 on sm) */}
+            <div className="h-14 sm:h-20 flex items-center">
+              <ChevronRight size={16} className="opacity-20 shrink-0" />
+            </div>
+            
+            <div className="flex flex-col gap-8">
               {node.next.map((child) => (
                 <div key={child.id}>
                   {renderBranch(child)}
