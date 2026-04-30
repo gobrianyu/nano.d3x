@@ -3,12 +3,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { PokemonDetail, PokemonIndexItem, PokemonType } from "./types";
 import { BASE_DATA_URL, REGIONS, TYPE_LIST, CLOUDFRONT_ASSETS_URL } from "./constants";
 import PokemonCard from "./components/PokemonCard";
 import PokemonModal from "./components/PokemonModal";
 import FilterDropdown from "./components/FilterDropdown";
+import LoadingScreen from "./components/LoadingScreen";
 import { motion, AnimatePresence } from "motion/react";
 import { Instagram, Search, HelpCircle, X, Sun, Moon, ArrowUp, Filter, Sparkles } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -32,6 +33,7 @@ export default function App() {
   const [lastDetailFetchTime, setLastDetailFetchTime] = useState(0);
   const [showHeaderSticky, setShowHeaderSticky] = useState(false);
   const [showBackToTop, setShowBackToTop] = useState(false);
+  const [isAppLoaded, setIsAppLoaded] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const stickySearchInputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
@@ -226,9 +228,20 @@ export default function App() {
     return count;
   }, [indexData, lastDetailFetchTime, queryClient]);
 
+  const handleLoadingComplete = useCallback(() => {
+    setIsAppLoaded(true);
+  }, []);
+
   return (
-    <div className={`${darkMode ? "dark" : ""} min-h-screen flex flex-col p-8 md:p-16 lg:p-24 pb-48 md:pb-64 selection:bg-rose-100 text-ink bg-paper transition-colors`}>
-      {/* Header - Reorganized Editorial Style */}
+    <div className={`${darkMode ? "dark" : ""} min-h-screen flex flex-col selection:bg-rose-100 bg-paper transition-colors`}>
+      <AnimatePresence>
+        {!isAppLoaded && (
+          <LoadingScreen onComplete={handleLoadingComplete} />
+        )}
+      </AnimatePresence>
+
+      <main className={`flex flex-col p-8 md:p-16 lg:p-24 pb-48 md:pb-64 text-ink transition-opacity duration-1000 ${isAppLoaded ? "opacity-100" : "opacity-0 h-0 overflow-hidden"}`}>
+        {/* Header - Reorganized Editorial Style */}
       <header className="relative mb-32">
         <div className="relative">
           {/* Banner Image - Constrained to top section */}
@@ -718,6 +731,7 @@ export default function App() {
           />
         )}
       </AnimatePresence>
+      </main>
     </div>
   );
 }
