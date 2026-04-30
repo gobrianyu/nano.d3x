@@ -365,7 +365,7 @@ export default function PokemonModal({ initialId, initialFormIndex = 0, onClose,
                     <div className="w-full px-6 py-8 pb-24 shrink-0 flex flex-col">
                       <div className="flex flex-wrap gap-2 mb-8 min-w-0">
                         {form.type.map((t) => (
-                          <span key={t} className="flex items-center gap-2 font-mono text-[10px] font-black uppercase tracking-wider px-2.5 py-1 bg-transparent text-ink border border-line max-w-full text-zinc-900 dark:text-zinc-100">
+                          <span key={t} className="flex items-center gap-2 font-mono text-[10px] font-black uppercase tracking-wider px-2.5 py-1 bg-transparent micro-label border border-line max-w-full text-zinc-900 dark:text-zinc-100">
                             <img src={`${CLOUDFRONT_ASSETS_URL}/type-icons/${t.toLowerCase()}-type-icon.png`} alt={t} className="w-3.5 h-3.5 object-contain shrink-0" onError={(e) => (e.currentTarget.style.display = "none")} />
                             <span className="truncate">{t}</span>
                           </span>
