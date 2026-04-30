@@ -22,13 +22,14 @@ interface PokemonModalProps {
   indexData: PokemonIndexItem[];
   shinyMode: boolean;
   filteredList: GalleryItem[];
+  isGimmickOnly?: boolean;
 }
 
-export default function PokemonModal({ initialId, initialFormIndex = 0, onClose, indexData, shinyMode, filteredList }: PokemonModalProps) {
+export default function PokemonModal({ initialId, initialFormIndex = 0, onClose, indexData, shinyMode, filteredList, isGimmickOnly = false }: PokemonModalProps) {
   // Gallery state: initialized from the filtered grid, but can grow with evolution jumps
   const [gallery, setGallery] = useState<GalleryItem[]>(() => {
-    // Ensure the initial item is in the gallery if somehow it wasn't (should be, but defensive)
-    if (!filteredList.some(item => item.id === initialId)) {
+    // Ensure the initial item is in the gallery
+    if (!filteredList.some(item => item.id === initialId && item.matchedFormIndex === initialFormIndex)) {
       const newItem = { id: initialId, matchedFormIndex: initialFormIndex };
       return [...filteredList, newItem].sort((a, b) => a.id - b.id);
     }
@@ -36,7 +37,7 @@ export default function PokemonModal({ initialId, initialFormIndex = 0, onClose,
   });
 
   const [currentIndex, setCurrentIndex] = useState(() => {
-    const idx = filteredList.findIndex(item => item.id === initialId);
+    const idx = filteredList.findIndex(item => item.id === initialId && item.matchedFormIndex === initialFormIndex);
     return idx !== -1 ? idx : 0;
   });
 
@@ -93,25 +94,15 @@ export default function PokemonModal({ initialId, initialFormIndex = 0, onClose,
 
   const regularFormsCount = detail?.forms?.length || 0;
   
-  // Derive currentFormIndex directly from ID and available forms
+  // Derive currentFormIndex directly from gallery's stored index
   const currentFormIndex = useMemo(() => {
     if (!detail || allForms.length === 0) return 0;
     
-    // Try to find form matching current ID
-    const matchedIndex = allForms.findIndex(f => {
-      const formId = detail.index === undefined ? detail["dex number"] : detail.index;
-      const key = f?.key || formId;
-      return Math.abs(Number(key) - id) < 0.0001;
-    });
-    
-    if (matchedIndex !== -1) return matchedIndex;
-    
-    // Fallback to gallery's stored index if valid
     const storedIdx = currentItem?.matchedFormIndex || 0;
     if (storedIdx < allForms.length) return storedIdx;
     
     return 0;
-  }, [allForms, detail, id, currentItem]);
+  }, [allForms, detail, currentItem]);
 
   const form = allForms[currentFormIndex];
   const isGimmick = currentFormIndex >= regularFormsCount;
@@ -272,21 +263,8 @@ export default function PokemonModal({ initialId, initialFormIndex = 0, onClose,
       />
  
       <div className="relative flex flex-col justify-center items-center gap-4 w-full h-full max-h-screen pointer-events-none z-10 m-auto">
-        <AnimatePresence mode="popLayout" initial={false}>
-          <motion.div 
-            key={Math.floor(id)}
-            initial={{ opacity: 0, scale: 0.98, y: 10 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 1.02, y: -10 }}
-            transition={{
-              duration: 0.4,
-              ease: [0.16, 1, 0.3, 1]
-            }}
+          <div 
             onClick={(e) => e.stopPropagation()}
-            drag="x"
-            dragConstraints={{ left: 0, right: 0 }}
-            dragElastic={0.2}
-            onDragEnd={onDragEnd}
             style={{ touchAction: "pan-y" }}
             className={`bg-paper shadow-[0_32px_64px_-16px_rgba(0,0,0,0.3)] overflow-hidden relative flex z-10 text-ink border border-line pointer-events-auto transition-all duration-300 min-h-0 ${
               isPortrait 
@@ -334,28 +312,21 @@ export default function PokemonModal({ initialId, initialFormIndex = 0, onClose,
                             <div className="w-10 h-10 border border-ink/5 border-t-ink rounded-full animate-spin" />
                           </div>
                         )}
-                        {!imgError ? (
-                          <AnimatePresence mode="wait">
-                            <motion.img
-                              key={`${currentFormIndex}-${gender}-${shinyMode}`}
-                              initial={{ scale: 0.95, opacity: 0 }}
-                              animate={{ scale: 1, opacity: imgLoading ? 0 : 1 }}
-                              exit={{ scale: 1.05, opacity: 0 }}
-                              transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-                              src={cachedImageUrl || null}
+                        {!imgError && !imgLoading && cachedImageUrl ? (
+                            <img
+                              src={cachedImageUrl}
                               alt={form.name}
                               referrerPolicy="no-referrer"
-                              className={`max-w-full max-h-full object-contain drop-shadow-[0_20px_60px_rgba(0,0,0,0.08)] dark:drop-shadow-[0_20px_60px_rgba(255,255,255,0.03)] transition-opacity duration-300 ${imgLoading ? "opacity-0" : "opacity-100"}`}
+                              className="max-w-full max-h-full object-contain drop-shadow-[0_20px_60px_rgba(0,0,0,0.08)] dark:drop-shadow-[0_20px_60px_rgba(255,255,255,0.03)] transition-opacity duration-300 opacity-100"
                             />
-                          </AnimatePresence>
-                        ) : (
+                        ) : !imgLoading && imgError ? (
                           <div className="flex flex-col items-center gap-4 text-center opacity-20">
                             <span className="font-display text-9xl font-black italic">?</span>
                             <p className="micro-label tracking-[0.5em]">No Asset</p>
                           </div>
-                        )}
+                        ) : null}
                       </div>
-                      {allForms.length > 1 && (
+                      {allForms.length > 1 && !isGimmickOnly && (
                         <div className="absolute inset-0 pointer-events-none">
                           <div 
                             className="absolute top-1/2 -translate-y-1/2 right-0 flex flex-col items-end z-40 group/selector pointer-events-none"
@@ -423,7 +394,7 @@ export default function PokemonModal({ initialId, initialFormIndex = 0, onClose,
                             <StatBar label="SPEED" value={stats.speed} />
                           </div>
                         </section>
-                        {!isGimmick && (
+                        {!isGimmick && !isGimmickOnly && (
                           <section className="space-y-6 pt-12 border-t border-line min-w-0">
                             <span className="micro-label opacity-40">Evolutionary Line</span>
                             <div className="w-full flex justify-center py-4">
@@ -464,18 +435,16 @@ export default function PokemonModal({ initialId, initialFormIndex = 0, onClose,
                             <div className="w-10 h-10 border border-ink/5 border-t-ink rounded-full animate-spin" />
                           </div>
                         )}
-                        {!imgError ? (
-                          <AnimatePresence mode="wait">
-                            <motion.img key={`${currentFormIndex}-${gender}-${shinyMode}`} initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: imgLoading ? 0 : 1 }} exit={{ scale: 1.05, opacity: 0 }} src={cachedImageUrl || null} alt={form.name} referrerPolicy="no-referrer" className={`max-w-full max-h-full object-contain drop-shadow-[0_20px_60px_rgba(0,0,0,0.08)]`} />
-                          </AnimatePresence>
-                        ) : (
+                        {!imgError && !imgLoading && cachedImageUrl ? (
+                            <img src={cachedImageUrl} alt={form.name} referrerPolicy="no-referrer" className="max-w-full max-h-full object-contain drop-shadow-[0_20px_60px_rgba(0,0,0,0.08)] transition-opacity duration-300 opacity-100" />
+                        ) : !imgLoading && imgError ? (
                           <div className="flex flex-col items-center gap-4 text-center opacity-20">
                             <span className="font-display text-9xl font-black italic">?</span>
                             <p className="micro-label tracking-[0.5em]">No Asset</p>
                           </div>
-                        )}
+                        ) : null}
                       </div>
-                      {allForms.length > 1 && (
+                      {allForms.length > 1 && !isGimmickOnly && (
                         <div className="absolute top-1/2 -translate-y-1/2 right-0 flex flex-col items-end z-40 group/selector pointer-events-none" onMouseLeave={() => setHoveredFormIndex(null)}>
                           <div className="flex flex-col gap-0.5 items-end max-h-[80vh] min-w-[500px] overflow-y-auto no-scrollbar py-20 pr-6 pl-[300px] scroll-smooth pointer-events-auto">
                             {allForms.map((f, i) => (
@@ -536,7 +505,7 @@ export default function PokemonModal({ initialId, initialFormIndex = 0, onClose,
                             <StatBar label="SPEED" value={stats.speed} />
                           </div>
                         </section>
-                        {!isGimmick && (
+                        {!isGimmick && !isGimmickOnly && (
                           <section className="space-y-6 pt-12 border-t border-line">
                             <span className="micro-label opacity-40">Evolutionary Line</span>
                             <div className="w-full flex justify-center py-4">
@@ -550,8 +519,7 @@ export default function PokemonModal({ initialId, initialFormIndex = 0, onClose,
                 )}
               </div>
             </div>
-          </motion.div>
-        </AnimatePresence>
+        </div>
 
         {/* Archive Navigation PILL - Positioned below the box */}
         {gallery.length > 1 && (

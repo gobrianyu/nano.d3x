@@ -5,7 +5,7 @@
 
 import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { PokemonDetail, PokemonIndexItem, PokemonType } from "./types";
-import { BASE_DATA_URL, REGIONS, TYPE_LIST, CLOUDFRONT_ASSETS_URL } from "./constants";
+import { BASE_DATA_URL, REGIONS, TYPE_LIST, CLOUDFRONT_ASSETS_URL, MEGA_POKEMON_IDS } from "./constants";
 import PokemonCard from "./components/PokemonCard";
 import PokemonModal from "./components/PokemonModal";
 import FilterDropdown from "./components/FilterDropdown";
@@ -34,6 +34,7 @@ export default function App() {
   const [showHeaderSticky, setShowHeaderSticky] = useState(false);
   const [showBackToTop, setShowBackToTop] = useState(false);
   const [isAppLoaded, setIsAppLoaded] = useState(false);
+  const [isMegaMode, setIsMegaMode] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const stickySearchInputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
@@ -121,6 +122,7 @@ export default function App() {
     setSearchQuery("");
     setSelectedRegion("All");
     setSelectedType("All");
+    setIsMegaMode(false);
   };
 
   const filterSectionRef = useRef<HTMLDivElement>(null);
@@ -145,6 +147,43 @@ export default function App() {
 
   // Advanced filtering using cached detail data where available
   const filteredIndex = useMemo(() => {
+    if (isMegaMode) {
+      const megaItems: any[] = [];
+      MEGA_POKEMON_IDS.forEach(id => {
+        const p = indexData.find(item => item.id === id);
+        if (!p) return;
+
+        const detail = queryClient.getQueryData<PokemonDetail>(["pokemonDetail", id]);
+        if (!detail || !detail["gimmick forms"]) return;
+
+        const forms = detail.forms || [];
+        const gimmickForms = detail["gimmick forms"] || [];
+        
+        gimmickForms.forEach((gf, gIndex) => {
+          if (gf["special form"]?.startsWith("Gigantamax")) return;
+          
+          // Basic search filter for megas
+          const matchesSearch = gf.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                              gf["special form"]?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                              id.toString().includes(searchQuery);
+          
+          if (!matchesSearch) return;
+
+          // Type filter for megas
+          const matchesType = selectedType === "All" || gf.type.includes(selectedType);
+          if (!matchesType) return;
+
+          megaItems.push({
+            ...p,
+            matchedFormIndex: forms.length + gIndex,
+            visible: true,
+            regionName: REGIONS.find(r => p.id >= r.startId && p.id <= r.endId)?.name || "Unknown"
+          });
+        });
+      });
+      return megaItems;
+    }
+
     return indexData.map((p) => {
       // Name search from thumbnail fallback
       const fallbackName = p.thumbnail.split("-").length > 1 
@@ -193,11 +232,11 @@ export default function App() {
         regionName: regionInfo?.name || "Unknown"
       };
     }).filter(p => p.visible);
-  }, [indexData, searchQuery, selectedRegion, selectedType, queryClient, lastDetailFetchTime]);
+  }, [indexData, searchQuery, selectedRegion, selectedType, queryClient, lastDetailFetchTime, isMegaMode]);
 
   // Group by regions for section headers (only when not searching/filtering by type/region)
   const sections = useMemo(() => {
-    const isFiltering = searchQuery !== "" || selectedType !== "All" || selectedRegion !== "All";
+    const isFiltering = searchQuery !== "" || selectedType !== "All" || selectedRegion !== "All" || isMegaMode;
     if (isFiltering) return null;
 
     return REGIONS.map(region => {
@@ -311,10 +350,22 @@ export default function App() {
               {/* Form Expansion Placeholders */}
               <div className="flex items-center gap-8">
                 <div className="h-4 w-px bg-line" />
-                <button className="micro-label opacity-20 flex items-center gap-2 group/btn" disabled>
+                <button 
+                  onClick={() => setIsMegaMode(false)}
+                  className={`micro-label flex items-center gap-2 transition-all ${!isMegaMode ? "text-ink font-bold" : "opacity-40 hover:opacity-100"}`}
+                >
+                  <span>NATIONAL</span>
+                </button>
+                <button 
+                  onClick={() => {
+                    setIsMegaMode(true);
+                    setSelectedRegion("All");
+                  }}
+                  className={`micro-label flex items-center gap-2 transition-all ${isMegaMode ? "text-ink font-bold" : "opacity-40 hover:opacity-100"}`}
+                >
                   <span>MEGA EVOLUTIONS</span>
                 </button>
-                <button className="micro-label opacity-20 flex items-center gap-2 group/btn" disabled>
+                <button className="micro-label opacity-20 flex items-center gap-2 group/btn" disabled title="Coming Soon">
                   <span>GIGANTAMAX</span>
                 </button>
               </div>
@@ -485,17 +536,17 @@ export default function App() {
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-px">
                   {section.pokemon.map((pokemon) => (
-                    <div key={pokemon.id} className="museum-cell">
-                      <PokemonCard
-                        pokemon={pokemon}
-                        targetFormIndex={pokemon.matchedFormIndex}
-                        shinyMode={shinyMode}
-                        onClick={() => {
-                          setSelectedPokemonId(pokemon.id);
-                          setSelectedFormIndex(pokemon.matchedFormIndex);
-                        }}
-                      />
-                    </div>
+                  <div key={`${pokemon.id}-${pokemon.matchedFormIndex}`} className="museum-cell">
+                    <PokemonCard
+                      pokemon={pokemon}
+                      targetFormIndex={pokemon.matchedFormIndex}
+                      shinyMode={shinyMode}
+                      onClick={() => {
+                        setSelectedPokemonId(pokemon.id);
+                        setSelectedFormIndex(pokemon.matchedFormIndex || 0);
+                      }}
+                    />
+                  </div>
                   ))}
                 </div>
               </div>
@@ -503,17 +554,17 @@ export default function App() {
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-px">
               {filteredIndex.map((pokemon) => (
-                <div key={pokemon.id} className="museum-cell">
-                  <PokemonCard
-                    pokemon={pokemon}
-                    targetFormIndex={pokemon.matchedFormIndex}
-                    shinyMode={shinyMode}
-                    onClick={() => {
-                      setSelectedPokemonId(pokemon.id);
-                      setSelectedFormIndex(pokemon.matchedFormIndex);
-                    }}
-                  />
-                </div>
+              <div key={`${pokemon.id}-${pokemon.matchedFormIndex}`} className="museum-cell">
+                <PokemonCard
+                  pokemon={pokemon}
+                  targetFormIndex={pokemon.matchedFormIndex}
+                  shinyMode={shinyMode}
+                  onClick={() => {
+                    setSelectedPokemonId(pokemon.id);
+                    setSelectedFormIndex(pokemon.matchedFormIndex || 0);
+                  }}
+                />
+              </div>
               ))}
             </div>
           )}
@@ -724,10 +775,14 @@ export default function App() {
           <PokemonModal
             initialId={selectedPokemonId}
             initialFormIndex={selectedFormIndex}
-            onClose={() => setSelectedPokemonId(null)}
+            onClose={() => {
+              setSelectedPokemonId(null);
+              setSelectedFormIndex(0);
+            }}
             indexData={indexData}
             shinyMode={shinyMode}
-            filteredList={filteredIndex.map(p => ({ id: p.id, matchedFormIndex: p.matchedFormIndex }))}
+            filteredList={filteredIndex.map(p => ({ id: p.id, matchedFormIndex: p.matchedFormIndex || 0 }))}
+            isGimmickOnly={isMegaMode}
           />
         )}
       </AnimatePresence>
