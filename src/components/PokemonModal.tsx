@@ -479,7 +479,7 @@ export default function PokemonModal({ initialId, initialFormIndex = 0, onClose,
                           )}
                           <div className="flex flex-wrap gap-2">
                              {form.type.map((t) => (
-                              <span key={t} className="flex items-center gap-2 font-mono text-[10px] font-black uppercase tracking-wider px-2.5 py-1.5 bg-transparent text-ink border border-line">
+                              <span key={t} className="flex items-center gap-2 font-mono text-[10px] font-black uppercase tracking-wider px-2.5 py-1.5 bg-transparent micro-label border border-line">
                                 <img src={`${CLOUDFRONT_ASSETS_URL}/type-icons/${t.toLowerCase()}-type-icon.png`} alt={t} className="w-4 h-4 object-contain" />
                                 <span>{t}</span>
                               </span>

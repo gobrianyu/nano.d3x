@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { motion, AnimatePresence } from "motion/react";
+import { motion } from "motion/react";
 
 interface LoadingScreenProps {
   onComplete: () => void;
@@ -60,7 +60,7 @@ export default function LoadingScreen({ onComplete }: LoadingScreenProps) {
             transition={{ duration: 0.6, delay: 0.3 }}
             className="micro-label tracking-[0.3em] uppercase"
           >
-            Initializing Protocol // Vol. 02
+            Initialising Portfolio // Vol. 02
           </motion.p>
         </div>
 
@@ -73,14 +73,10 @@ export default function LoadingScreen({ onComplete }: LoadingScreenProps) {
           </div>
           
           <div className="flex justify-between items-end font-mono">
-            <div className="flex flex-col gap-1">
-              <span className="text-[10px] opacity-30 uppercase tracking-widest">Status</span>
-              <span className="text-[11px] font-bold uppercase tracking-wider animate-pulse">
-                {progress === targetCount ? "System Ready" : "Collecting Data..."}
-              </span>
-            </div>
-            <div className="text-right flex flex-col gap-1">
-              <span className="text-[10px] opacity-30 uppercase tracking-widest">Registration</span>
+            <span className="text-[11px] font-bold uppercase tracking-wider">
+              {progress === targetCount ? "System Ready" : "Collecting Data..."}
+            </span>
+            <div className="text-right">
               <span className="text-2xl font-display font-black tracking-tighter">
                 {progress.toLocaleString()}<span className="text-xs opacity-20 ml-1">/ {targetCount}</span>
               </span>
