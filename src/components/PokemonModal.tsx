@@ -302,6 +302,12 @@ export default function PokemonModal({ initialId, initialFormIndex = 0, onClose,
                           } as any)}
                         />
                       </div>
+                      {form["special form"] && (
+                        <div className="flex items-center gap-3 pt-4">
+                          <div className="w-1.5 h-1.5 rounded-full bg-ink/20" />
+                          <span className="text-[11px] font-bold tracking-[0.2em] opacity-80 uppercase leading-none">{form["special form"]}</span>
+                        </div>
+                      )}
                     </div>
 
                     {/* Image */}
@@ -465,7 +471,12 @@ export default function PokemonModal({ initialId, initialFormIndex = 0, onClose,
                       <header className="mb-12">
                         <div className="flex flex-col gap-4">
                           <Textfit {...({ mode: "single", max: 80, min: 20, className: "font-display font-black tracking-tighter leading-[0.85] pb-4 whitespace-nowrap", children: form.name } as any)} />
-                          {form["special form"] && <span className="micro-label opacity-40 italic">Variant: {form["special form"]}</span>}
+                          {form["special form"] && (
+                            <div className="flex items-center gap-3 mb-2">
+                              <div className="w-2 h-2 rounded-full bg-ink/10" />
+                              <span className="text-xs font-bold tracking-[0.2em] opacity-90 uppercase leading-none">{form["special form"]}</span>
+                            </div>
+                          )}
                           <div className="flex flex-wrap gap-2">
                              {form.type.map((t) => (
                               <span key={t} className="flex items-center gap-2 font-mono text-[10px] font-black uppercase tracking-wider px-2.5 py-1.5 bg-transparent text-ink border border-line">

@@ -5,7 +5,7 @@
 
 import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { PokemonDetail, PokemonIndexItem, PokemonType } from "./types";
-import { BASE_DATA_URL, REGIONS, TYPE_LIST, CLOUDFRONT_ASSETS_URL, MEGA_POKEMON_IDS } from "./constants";
+import { BASE_DATA_URL, REGIONS, TYPE_LIST, CLOUDFRONT_ASSETS_URL, MEGA_POKEMON_IDS, GIGANTAMAX_POKEMON_IDS } from "./constants";
 import PokemonCard from "./components/PokemonCard";
 import PokemonModal from "./components/PokemonModal";
 import FilterDropdown from "./components/FilterDropdown";
@@ -34,7 +34,7 @@ export default function App() {
   const [showHeaderSticky, setShowHeaderSticky] = useState(false);
   const [showBackToTop, setShowBackToTop] = useState(false);
   const [isAppLoaded, setIsAppLoaded] = useState(false);
-  const [isMegaMode, setIsMegaMode] = useState(false);
+  const [viewMode, setViewMode] = useState<"national" | "mega" | "gigantamax">("national");
   const searchInputRef = useRef<HTMLInputElement>(null);
   const stickySearchInputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
@@ -122,7 +122,7 @@ export default function App() {
     setSearchQuery("");
     setSelectedRegion("All");
     setSelectedType("All");
-    setIsMegaMode(false);
+    setViewMode("national");
   };
 
   const filterSectionRef = useRef<HTMLDivElement>(null);
@@ -147,9 +147,11 @@ export default function App() {
 
   // Advanced filtering using cached detail data where available
   const filteredIndex = useMemo(() => {
-    if (isMegaMode) {
-      const megaItems: any[] = [];
-      MEGA_POKEMON_IDS.forEach(id => {
+    if (viewMode === "mega" || viewMode === "gigantamax") {
+      const gimmickItems: any[] = [];
+      const targetIds = viewMode === "mega" ? MEGA_POKEMON_IDS : GIGANTAMAX_POKEMON_IDS;
+
+      targetIds.forEach(id => {
         const p = indexData.find(item => item.id === id);
         if (!p) return;
 
@@ -160,20 +162,23 @@ export default function App() {
         const gimmickForms = detail["gimmick forms"] || [];
         
         gimmickForms.forEach((gf, gIndex) => {
-          if (gf["special form"]?.startsWith("Gigantamax")) return;
+          const isGigantamax = gf["special form"]?.startsWith("Gigantamax");
           
-          // Basic search filter for megas
+          if (viewMode === "mega" && isGigantamax) return;
+          if (viewMode === "gigantamax" && !isGigantamax) return;
+          
+          // Basic search filter
           const matchesSearch = gf.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
                               gf["special form"]?.toLowerCase().includes(searchQuery.toLowerCase()) ||
                               id.toString().includes(searchQuery);
           
           if (!matchesSearch) return;
 
-          // Type filter for megas
+          // Type filter
           const matchesType = selectedType === "All" || gf.type.includes(selectedType);
           if (!matchesType) return;
 
-          megaItems.push({
+          gimmickItems.push({
             ...p,
             matchedFormIndex: forms.length + gIndex,
             visible: true,
@@ -181,7 +186,7 @@ export default function App() {
           });
         });
       });
-      return megaItems;
+      return gimmickItems;
     }
 
     return indexData.map((p) => {
@@ -232,11 +237,11 @@ export default function App() {
         regionName: regionInfo?.name || "Unknown"
       };
     }).filter(p => p.visible);
-  }, [indexData, searchQuery, selectedRegion, selectedType, queryClient, lastDetailFetchTime, isMegaMode]);
+  }, [indexData, searchQuery, selectedRegion, selectedType, queryClient, lastDetailFetchTime, viewMode]);
 
   // Group by regions for section headers (only when not searching/filtering by type/region)
   const sections = useMemo(() => {
-    const isFiltering = searchQuery !== "" || selectedType !== "All" || selectedRegion !== "All" || isMegaMode;
+    const isFiltering = searchQuery !== "" || selectedType !== "All" || selectedRegion !== "All" || viewMode !== "national";
     if (isFiltering) return null;
 
     return REGIONS.map(region => {
@@ -272,7 +277,7 @@ export default function App() {
   }, []);
 
   return (
-    <div className={`${darkMode ? "dark" : ""} min-h-screen flex flex-col selection:bg-rose-100 bg-paper transition-colors`}>
+    <div className={`${darkMode ? "dark" : ""} min-h-screen flex flex-col selection:bg-ink/10 bg-paper transition-colors`}>
       <AnimatePresence>
         {!isAppLoaded && (
           <LoadingScreen onComplete={handleLoadingComplete} />
@@ -351,21 +356,27 @@ export default function App() {
               <div className="flex items-center gap-8">
                 <div className="h-4 w-px bg-line" />
                 <button 
-                  onClick={() => setIsMegaMode(false)}
-                  className={`micro-label flex items-center gap-2 transition-all ${!isMegaMode ? "text-ink font-bold" : "opacity-40 hover:opacity-100"}`}
+                  onClick={() => setViewMode("national")}
+                  className={`micro-label flex items-center gap-2 transition-all ${viewMode === "national" ? "text-ink font-bold" : "opacity-40 hover:opacity-100"}`}
                 >
                   <span>NATIONAL</span>
                 </button>
                 <button 
                   onClick={() => {
-                    setIsMegaMode(true);
+                    setViewMode("mega");
                     setSelectedRegion("All");
                   }}
-                  className={`micro-label flex items-center gap-2 transition-all ${isMegaMode ? "text-ink font-bold" : "opacity-40 hover:opacity-100"}`}
+                  className={`micro-label flex items-center gap-2 transition-all ${viewMode === "mega" ? "text-ink font-bold" : "opacity-40 hover:opacity-100"}`}
                 >
                   <span>MEGA EVOLUTIONS</span>
                 </button>
-                <button className="micro-label opacity-20 flex items-center gap-2 group/btn" disabled title="Coming Soon">
+                <button 
+                  onClick={() => {
+                    setViewMode("gigantamax");
+                    setSelectedRegion("All");
+                  }}
+                  className={`micro-label flex items-center gap-2 transition-all ${viewMode === "gigantamax" ? "text-ink font-bold" : "opacity-40 hover:opacity-100"}`}
+                >
                   <span>GIGANTAMAX</span>
                 </button>
               </div>
@@ -782,7 +793,7 @@ export default function App() {
             indexData={indexData}
             shinyMode={shinyMode}
             filteredList={filteredIndex.map(p => ({ id: p.id, matchedFormIndex: p.matchedFormIndex || 0 }))}
-            isGimmickOnly={isMegaMode}
+            isGimmickOnly={viewMode !== "national"}
           />
         )}
       </AnimatePresence>
