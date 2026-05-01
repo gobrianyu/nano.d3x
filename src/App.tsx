@@ -162,10 +162,11 @@ export default function App() {
         const gimmickForms = detail["gimmick forms"] || [];
         
         gimmickForms.forEach((gf, gIndex) => {
-          const isGigantamax = gf["special form"]?.startsWith("Gigantamax");
+          const specialForm = gf["special form"] || "";
+          const isGigantamaxOrEternamax = specialForm.startsWith("Gigantamax") || specialForm.startsWith("Eternamax");
           
-          if (viewMode === "mega" && isGigantamax) return;
-          if (viewMode === "gigantamax" && !isGigantamax) return;
+          if (viewMode === "mega" && isGigantamaxOrEternamax) return;
+          if (viewMode === "gigantamax" && !isGigantamaxOrEternamax) return;
           
           // Basic search filter
           const matchesSearch = gf.name.toLowerCase().includes(searchQuery.toLowerCase()) || 

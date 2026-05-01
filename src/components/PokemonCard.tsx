@@ -55,7 +55,7 @@ export default function PokemonCard({ pokemon, targetFormIndex = 0, shinyMode, o
       className="group relative aspect-[5/3] w-full flex items-center p-4 bg-transparent transition-all ring-2 ring-transparent hover:ring-ink cursor-pointer overflow-hidden z-10"
     >
       {/* Name - Background subtle text */}
-      <div className="absolute left-4 bottom-4 micro-label opacity-5 group-hover:opacity-20 transition-all pointer-events-none">
+      <div className="absolute left-4 bottom-3 micro-label opacity-40 group-hover:opacity-100 transition-all pointer-events-none">
         {displayTitle}
       </div>
 

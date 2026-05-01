@@ -136,7 +136,8 @@ export default function PokemonModal({ initialId, initialFormIndex = 0, onClose,
     );
   }
 
-  const isGigantamax = form?.["special form"]?.startsWith("Gigantamax");
+  const specialFormName = form?.["special form"] || "";
+  const isGigantamax = specialFormName.startsWith("Gigantamax") || specialFormName.startsWith("Eternamax");
 
   const imageKey = `image asset ${gender}${shinyMode ? " shiny" : ""}` as keyof PokemonForm;
   const imageUrl = form ? `${BASE_IMAGE_URL}/${form[imageKey] || "unknown.png"}` : "";
