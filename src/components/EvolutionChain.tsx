@@ -60,7 +60,7 @@ function EvolutionNode({ id, shinyMode, onSelect, isCurrent }: EvolutionNodeProp
         onClick={() => onSelect(id)}
         className={`relative w-14 h-14 sm:w-20 sm:h-20 rounded-none flex items-center justify-center border transition-all shrink-0 p-1.5 ${
           isCurrent 
-            ? "bg-paper border-ink scale-110 z-10" 
+            ? "bg-paper border-ink z-10" 
             : "bg-ink/[0.02] border-line hover:bg-ink/[0.05]"
         }`}
       >
@@ -100,6 +100,10 @@ export default function EvolutionChain({ shinyMode, onSelect, currentId }: Evolu
   const [tree, setTree] = useState<ChainNode | null>(null);
   const [isSyncing, setIsSyncing] = useState(true);
   const queryClient = useQueryClient();
+
+  const containerRef = React.useRef<HTMLDivElement>(null);
+  const contentRef = React.useRef<HTMLDivElement>(null);
+  const [scale, setScale] = useState(1);
 
   useEffect(() => {
     let active = true;
@@ -166,6 +170,29 @@ export default function EvolutionChain({ shinyMode, onSelect, currentId }: Evolu
     return () => { active = false; };
   }, [currentId, queryClient]);
 
+  useEffect(() => {
+    function updateScale() {
+      if (!containerRef.current || !contentRef.current) return;
+
+      const containerWidth = containerRef.current.offsetWidth;
+      const contentWidth = contentRef.current.scrollWidth;
+
+      if (!contentWidth) return;
+
+      const nextScale = Math.min(1, containerWidth / contentWidth);
+      setScale(nextScale);
+    }
+
+    updateScale();
+
+    const observer = new ResizeObserver(updateScale);
+
+    if (containerRef.current) observer.observe(containerRef.current);
+    if (contentRef.current) observer.observe(contentRef.current);
+
+    return () => observer.disconnect();
+  }, [tree]);
+
   if (isSyncing) {
     return (
       <div className="flex items-center justify-center py-8">
@@ -208,9 +235,21 @@ export default function EvolutionChain({ shinyMode, onSelect, currentId }: Evolu
   };
 
   return (
-    <div className="py-2 w-full max-w-full overflow-hidden">
+    <div
+      ref={containerRef}
+      className="py-2 w-full max-w-full overflow-hidden"
+    >
       <div className="flex items-center justify-center w-full px-2">
-        {renderBranch(tree)}
+        <div
+          ref={contentRef}
+          style={{
+            transform: `scale(${scale})`,
+            transformOrigin: "top center",
+          }}
+          className="inline-block"
+        >
+          {renderBranch(tree)}
+        </div>
       </div>
     </div>
   );

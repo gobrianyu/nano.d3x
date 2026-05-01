@@ -74,7 +74,7 @@ export default function LoadingScreen({ onComplete }: LoadingScreenProps) {
           
           <div className="flex justify-between items-end font-mono">
             <span className="text-[11px] font-bold uppercase tracking-wider">
-              {progress === targetCount ? "System Ready" : "Collecting Data..."}
+              {progress === targetCount ? "Ready" : "Loading Data..."}
             </span>
             <div className="text-right">
               <span className="text-2xl font-display font-black tracking-tighter">

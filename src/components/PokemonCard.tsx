@@ -38,7 +38,7 @@ export default function PokemonCard({ pokemon, targetFormIndex = 0, shinyMode, o
 
   const pokemonName = targetForm?.name || "???";
   const specialForm = targetForm?.["special form"];
-  const displayTitle = specialForm ? `${pokemonName} (${specialForm})` : pokemonName;
+  const displayTitle = specialForm ? specialForm : pokemonName;
 
   const gender = "m"; // Default to male for grid
   const imageKey = `image asset ${gender}${shinyMode ? " shiny" : ""}` as keyof PokemonForm;
@@ -83,7 +83,6 @@ export default function PokemonCard({ pokemon, targetFormIndex = 0, shinyMode, o
         ) : (
           <div className="flex flex-col items-center justify-center opacity-40 group-hover:opacity-80 transition-opacity">
             <span className="font-display text-sm font-black italic break-words text-center px-2">{pokemonName}</span>
-            {specialForm && <span className="text-[8px] micro-label opacity-60">{specialForm}</span>}
             <span className="text-[7px] micro-label tracking-tighter mt-1 opacity-40">Archive Incomplete</span>
           </div>
         )}
