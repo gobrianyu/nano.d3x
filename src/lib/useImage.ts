@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { imageCacheManager } from './cacheService';
 
-export function useImage(url: string, enabled: boolean = true) {
+export function useImage(url: string, enabled: boolean = true, onSuccess?: () => void, onError?: () => void) {
   const [src, setSrc] = useState<string | null>(null);
   const [error, setError] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -18,12 +18,14 @@ export function useImage(url: string, enabled: boolean = true) {
         if (active) {
           setSrc(objectUrl);
           setLoading(false);
+          if (onSuccess) onSuccess();
         }
       })
       .catch(() => {
         if (active) {
           setError(true);
           setLoading(false);
+          if (onError) onError();
         }
       });
 

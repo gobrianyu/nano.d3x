@@ -9,6 +9,8 @@
   --color-paper: var(--paper);
   --color-ink: var(--ink);
   --color-line: var(--line);
+  --color-gmax: #d0006f;
+  --color-gmax-soft: rgba(208, 0, 111, 0.1);
 }
 
 @layer base {
@@ -16,6 +18,7 @@
     --paper: #fcfcf9;
     --ink: #121212;
     --line: rgba(18, 18, 18, 0.08);
+    --gmax: #d0006f;
     color-scheme: light;
   }
 
@@ -23,11 +26,55 @@
     --paper: #121212;
     --ink: #fcfcf9;
     --line: rgba(255, 255, 255, 0.15);
+    --gmax: #ff2d85;
     color-scheme: dark;
   }
 
   body {
     @apply bg-paper text-ink selection:bg-ink selection:text-paper antialiased font-sans min-h-screen transition-colors;
+  }
+}
+
+@layer utilities {
+  .gmax-pulse {
+    animation: gmax-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  @keyframes gmax-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: .5; }
+  }
+
+  .gmax-glow {
+    box-shadow: 0 0 20px rgba(208, 0, 111, 0.3);
+  }
+
+  .gmax-instability {
+    animation: gmax-instability 4s linear infinite;
+  }
+
+  @keyframes gmax-instability {
+    0%, 100% { 
+      filter: drop-shadow(0 0 2px rgba(208, 0, 111, 0.4));
+      transform: scale(1);
+    }
+    33% {
+      filter: drop-shadow(0 0 8px rgba(208, 0, 111, 0.8));
+      transform: scale(1.01) rotate(0.1deg);
+    }
+    66% {
+      filter: drop-shadow(0 0 4px rgba(208, 0, 111, 0.6));
+      transform: scale(0.99) rotate(-0.1deg);
+    }
+  }
+
+  .gmax-border-pulse {
+    animation: gmax-border-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  @keyframes gmax-border-pulse {
+    0%, 100% { border-color: var(--line); }
+    50% { border-color: rgba(208, 0, 111, 0.5); }
   }
 }
 
@@ -72,6 +119,16 @@
 
 .shiny-gradient {
   background: radial-gradient(circle at center, rgba(255, 215, 0, 0.05) 0%, transparent 70%);
+}
+
+.gmax-gradient {
+  background: radial-gradient(circle at center, transparent 0%, rgba(208, 0, 111, 0.08) 100%);
+  animation: gmax-gradient-pulse 4s ease-in-out infinite;
+}
+
+@keyframes gmax-gradient-pulse {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 1; }
 }
 
 .no-scrollbar::-webkit-scrollbar {

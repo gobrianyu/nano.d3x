@@ -21,11 +21,12 @@ interface PokemonModalProps {
   onClose: () => void;
   indexData: PokemonIndexItem[];
   shinyMode: boolean;
+  onImageLoad?: (id: number, formIndex: number) => void;
   filteredList: GalleryItem[];
   isGimmickOnly?: boolean;
 }
 
-export default function PokemonModal({ initialId, initialFormIndex = 0, onClose, indexData, shinyMode, filteredList, isGimmickOnly = false }: PokemonModalProps) {
+export default function PokemonModal({ initialId, initialFormIndex = 0, onClose, indexData, shinyMode, onImageLoad, filteredList, isGimmickOnly = false }: PokemonModalProps) {
   // Gallery state: initialized from the filtered grid, but can grow with evolution jumps
   const [gallery, setGallery] = useState<GalleryItem[]>(() => {
     // Ensure the initial item is in the gallery
@@ -142,7 +143,11 @@ export default function PokemonModal({ initialId, initialFormIndex = 0, onClose,
   const imageKey = `image asset ${gender}${shinyMode ? " shiny" : ""}` as keyof PokemonForm;
   const imageUrl = form ? `${BASE_IMAGE_URL}/${form[imageKey] || "unknown.png"}` : "";
   
-  const { src: cachedImageUrl, loading: imgLoading, error: imgError } = useImage(imageUrl);
+  const { src: cachedImageUrl, loading: imgLoading, error: imgError } = useImage(
+    imageUrl, 
+    true, 
+    () => onImageLoad && onImageLoad(id, currentFormIndex)
+  );
 
   const stats = form?.["base stats"]?.[0] || { hp: 0, atk: 0, def: 0, "sp.atk": 0, "sp.def": 0, speed: 0 };
   const mainType = (form?.type?.[0] || "Unknown") as PokemonType;

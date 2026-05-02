@@ -12,21 +12,36 @@ interface PokemonCardProps {
   pokemon: PokemonIndexItem;
   targetFormIndex?: number;
   shinyMode: boolean;
+  isGmaxMode?: boolean;
+  isSelected?: boolean;
+  onImageLoad?: (id: number, formIndex: number) => void;
+  isAllowedToLoad?: boolean;
+  onLoadComplete?: () => void;
   onClick: () => void;
   key?: React.Key;
 }
 
-export default function PokemonCard({ pokemon, targetFormIndex = 0, shinyMode, onClick }: PokemonCardProps) {
+export default function PokemonCard({ 
+  pokemon, 
+  targetFormIndex = 0, 
+  shinyMode, 
+  isGmaxMode, 
+  isSelected, 
+  onImageLoad,
+  isAllowedToLoad = true,
+  onLoadComplete,
+  onClick 
+}: PokemonCardProps) {
   const { ref, inView } = useInView({
     triggerOnce: true,
     rootMargin: "200px",
   });
 
-  // Fetch details only when in view or when needed for display
-  const { data: detail } = useQuery<PokemonDetail>({
+  // Fetch details - only when allowed in sequence
+  const { data: detail, isLoading: detailLoading } = useQuery<PokemonDetail>({
     queryKey: ["pokemonDetail", pokemon.id],
     queryFn: () => cachedFetch(`${BASE_DATA_URL}/pokemon/${pokemon.id}.json`),
-    enabled: inView,
+    enabled: isAllowedToLoad,
     staleTime: Infinity,
   });
 
@@ -46,29 +61,46 @@ export default function PokemonCard({ pokemon, targetFormIndex = 0, shinyMode, o
   const fallbackImage = shinyMode ? pokemon.thumbnail_shiny : pokemon.thumbnail;
   const targetImageUrl = targetForm ? `${BASE_IMAGE_URL}/${targetForm[imageKey] || "unknown.png"}` : `${BASE_IMAGE_URL}/${fallbackImage}`;
   
-  const { src: cachedImageUrl, error: imageError, loading } = useImage(targetImageUrl, inView);
+  // Sequential image load: start when allowed (and detail is ready)
+  const { src: cachedImageUrl, error: imageError, loading: imageLoading } = useImage(
+    targetImageUrl, 
+    isAllowedToLoad && !!detail, 
+    () => {
+      if (onImageLoad) onImageLoad(pokemon.id, targetFormIndex);
+      if (onLoadComplete) onLoadComplete();
+    },
+    () => {
+      if (onLoadComplete) onLoadComplete();
+    }
+  );
+
+  const isLoading = (isAllowedToLoad && (detailLoading || imageLoading)) || (!isAllowedToLoad && !cachedImageUrl && !imageError);
 
   return (
     <motion.button
       ref={ref}
       onClick={onClick}
-      className="group relative aspect-[5/3] w-full flex items-center p-4 bg-transparent transition-all ring-2 ring-transparent hover:ring-ink cursor-pointer overflow-hidden z-10"
+      className={`group relative aspect-[5/3] w-full flex items-center p-4 bg-transparent transition-all ring-2 cursor-pointer overflow-hidden z-10 ${isSelected ? (isGmaxMode ? 'ring-gmax' : 'ring-ink') : 'ring-transparent'} ${isGmaxMode ? 'hover:ring-gmax gmax-border-pulse' : 'hover:ring-ink'}`}
     >
       {/* Name - Background subtle text */}
-      <div className="absolute left-4 bottom-3 micro-label opacity-40 group-hover:opacity-100 transition-all pointer-events-none">
+      <div className={`absolute left-4 bottom-3 micro-label transition-all pointer-events-none z-10 ${isGmaxMode ? '!text-gmax/40 group-hover:text-gmax opacity-100 font-bold' : 'opacity-40 group-hover:opacity-100'}`}>
         {displayTitle}
       </div>
 
       {/* Dex ID - Top Right */}
-      <div className="absolute top-3 right-4 micro-label opacity-40 group-hover:opacity-100 group-hover:scale-110 text-ink transition-all origin-right">
+      <div className={`absolute top-3 right-4 micro-label transition-all origin-right z-10 ${isGmaxMode ? '!text-gmax/40 group-hover:text-gmax opacity-100 group-hover:scale-110 font-bold' : 'text-ink opacity-40 group-hover:opacity-100 group-hover:scale-110'}`}>
         {String(pokemon.id).padStart(4, "0")}
       </div>
       
       {/* Image - Left Centered */}
-      <div className="h-full aspect-square flex items-center justify-center relative z-0">
+      <div className="h-full aspect-square flex items-center justify-center relative z-10">
+        {/* GMAX Gradient Background centered on image */}
+        {isGmaxMode && (
+          <div className="absolute inset-[-100%] gmax-gradient pointer-events-none z-[-1]" />
+        )}
         {!imageError ? (
           <>
-            {loading && (
+            {isLoading && (
               <div className="absolute inset-0 flex items-center justify-center">
                 <div className="w-4 h-4 border border-ink/10 border-t-ink rounded-full animate-spin" />
               </div>
@@ -77,7 +109,7 @@ export default function PokemonCard({ pokemon, targetFormIndex = 0, shinyMode, o
               src={cachedImageUrl || null}
               alt={pokemonName}
               referrerPolicy="no-referrer"
-              className={`h-[100%] w-[100%] object-contain transition-opacity duration-300 ${loading ? "opacity-0" : "opacity-100"}`}
+              className={`h-[100%] w-[100%] object-contain transition-opacity duration-300 ${isLoading ? "opacity-0" : "opacity-100"}`}
             />
           </>
         ) : (

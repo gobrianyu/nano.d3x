@@ -13,6 +13,7 @@ interface FilterDropdownProps<T> {
   filterId: string;
   standalone?: boolean;
   compact?: boolean;
+  isGmaxMode?: boolean;
 }
 
 export default function FilterDropdown<T extends string>({
@@ -25,7 +26,8 @@ export default function FilterDropdown<T extends string>({
   setActiveFilter,
   filterId,
   standalone,
-  compact
+  compact,
+  isGmaxMode
 }: FilterDropdownProps<T>) {
   const isOpen = activeFilter === filterId;
   const dropdownRef = useRef<HTMLDivElement>(null);
