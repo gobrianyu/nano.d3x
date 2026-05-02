@@ -506,14 +506,18 @@ export default function App() {
                   >
                     Gigantamax
                   </motion.div>
-                  <motion.div 
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.3 }}
-                    className="flex items-center gap-4 py-2 px-6 bg-gmax text-paper skew-x-[-12deg]"
-                  >
-                    <span className="micro-label text-paper tracking-[0.6em] font-black italic">Limit Break Detected</span>
-                  </motion.div>
+                  <motion.img 
+                    src={`${CLOUDFRONT_ASSETS_URL}/gmax.png`}
+                    initial={{ opacity: 0, scale: 2, rotate: 10, filter: "blur(20px)" }}
+                    animate={{ opacity: 1, scale: 1, rotate: 0, filter: "blur(0px)" }}
+                    transition={{ 
+                      delay: 0.5, 
+                      duration: 0.8, 
+                      ease: [0.34, 1.56, 0.64, 1] 
+                    }}
+                    className="w-40 h-40 md:w-56 md:h-56 object-contain mt-8 pointer-events-none drop-shadow-[0_0_40px_rgba(208,0,111,0.6)]"
+                    alt="G-Max Symbol"
+                  />
                 </div>
 
                 <div className="flex gap-4">
