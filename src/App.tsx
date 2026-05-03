@@ -585,13 +585,13 @@ export default function App() {
               <div className="flex gap-12">
                 {viewMode === 'national' && (
                   <div className="flex flex-col gap-1">
-                    <span className="micro-label opacity-40">SPECIES REGISTERED</span>
-                    <span className={`text-2xl font-display font-black tracking-tight`}>{registeredCount}<span className="text-sm opacity-20 ml-1">/ {targetTotal}</span></span>
+                    <span className="micro-label opacity-60">SPECIES REGISTERED</span>
+                    <span className={`text-2xl font-display font-black tracking-tight`}>{registeredCount}<span className="text-sm opacity-40 ml-1">/ {targetTotal}</span></span>
                   </div>
                 )}
                 <div className="flex flex-col gap-1">
-                  <span className="micro-label opacity-40">FORMS REGISTERED</span>
-                  <span className={`text-2xl font-display font-black tracking-tight ${viewMode === 'gigantamax' ? 'text-gmax gmax-pulse' : ''}`}>{totalFormsRegistered}<span className="text-sm opacity-20 ml-1">/ {totalFormsCount}</span></span>
+                  <span className="micro-label opacity-60">FORMS REGISTERED</span>
+                  <span className={`text-2xl font-display font-black tracking-tight ${viewMode === 'gigantamax' ? 'text-gmax gmax-pulse' : ''}`}>{totalFormsRegistered}<span className="text-sm opacity-40 ml-1">/ {totalFormsCount}</span></span>
                 </div>
               </div>
             </div>

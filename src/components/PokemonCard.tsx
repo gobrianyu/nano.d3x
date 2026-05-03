@@ -83,12 +83,12 @@ export default function PokemonCard({
       className={`group relative aspect-[5/3] w-full flex items-center p-4 bg-transparent transition-all ring-2 cursor-pointer overflow-hidden z-10 ${isSelected ? (isGmaxMode ? 'ring-gmax' : 'ring-ink') : 'ring-transparent'} ${isGmaxMode ? 'hover:ring-gmax gmax-border-pulse' : 'hover:ring-ink'}`}
     >
       {/* Name - Background subtle text */}
-      <div className={`absolute left-4 bottom-3 micro-label transition-all pointer-events-none z-10 ${isGmaxMode ? '!text-gmax/40 group-hover:text-gmax opacity-100 font-bold' : 'opacity-40 group-hover:opacity-100'}`}>
+      <div className={`absolute left-4 bottom-3 micro-label transition-all pointer-events-none z-10 ${isGmaxMode ? '!text-gmax/40 group-hover:!text-gmax group-hover:opacity-100 font-bold' : 'opacity-40 group-hover:opacity-100'}`}>
         {displayTitle}
       </div>
 
       {/* Dex ID - Top Right */}
-      <div className={`absolute top-3 right-4 micro-label transition-all origin-right z-10 ${isGmaxMode ? '!text-gmax/40 group-hover:text-gmax opacity-100 group-hover:scale-110 font-bold' : 'text-ink opacity-40 group-hover:opacity-100 group-hover:scale-110'}`}>
+      <div className={`absolute top-3 right-4 micro-label transition-all origin-right z-10 ${isGmaxMode ? '!text-gmax/40 group-hover:!text-gmax opacity-100 group-hover:scale-110 font-bold' : 'text-ink opacity-40 group-hover:opacity-100 group-hover:scale-110'}`}>
         {String(pokemon.id).padStart(4, "0")}
       </div>
       
