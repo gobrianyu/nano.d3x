@@ -70,8 +70,8 @@ export default function PokemonModal({ initialId, initialFormIndex = 0, onClose,
   }, []);
 
   const { data: detail, isLoading: loading, error: fetchError } = useQuery<PokemonDetail>({
-    queryKey: ["pokemonDetail", Math.floor(id)],
-    queryFn: () => cachedFetch(`${BASE_DATA_URL}/pokemon/${Math.floor(id)}.json`),
+    queryKey: ["pokemonDetail", id ? Math.floor(id) : 0],
+    queryFn: () => cachedFetch(`${BASE_DATA_URL}/pokemon/${id ? Math.floor(id) : 0}.json`),
     staleTime: 1000 * 60 * 30, // 30 minutes
     enabled: !!id,
   });
@@ -84,7 +84,7 @@ export default function PokemonModal({ initialId, initialFormIndex = 0, onClose,
     }
   }, [detail]);
 
-  // Consolidate form construction to one place
+  // Consolidate form construction
   const allForms = useMemo(() => {
     if (!detail) return [];
     return [
@@ -95,47 +95,14 @@ export default function PokemonModal({ initialId, initialFormIndex = 0, onClose,
 
   const regularFormsCount = detail?.forms?.length || 0;
   
-  // Derive currentFormIndex directly from gallery's stored index
   const currentFormIndex = useMemo(() => {
     if (!detail || allForms.length === 0) return 0;
-    
     const storedIdx = currentItem?.matchedFormIndex || 0;
-    if (storedIdx < allForms.length) return storedIdx;
-    
-    return 0;
+    return (storedIdx < allForms.length) ? storedIdx : 0;
   }, [allForms, detail, currentItem]);
 
   const form = allForms[currentFormIndex];
   const isGimmick = currentFormIndex >= regularFormsCount;
-
-  // Final validation before rendering
-  const isValidData = !!(detail && detail["dex number"] && form && form.name);
-
-  if (!loading && detail && !isValidData) {
-    return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 modal-overlay" onClick={onClose}>
-        <div className="bg-paper dark:bg-ink w-full max-w-lg p-12 flex flex-col items-center gap-8 text-center border border-line dark:border-line-dark shadow-2xl pointer-events-auto">
-          <HelpCircle size={40} strokeWidth={1} className="opacity-20" />
-          <div className="space-y-2">
-            <p className="micro-label opacity-40">Entry Corrupted or Incomplete</p>
-            <p className="text-xs opacity-60">The species data for #{id} could not be fully reconstructed.</p>
-          </div>
-          <button onClick={onClose} className="micro-label px-8 py-3 border border-line cursor-pointer hover:bg-ink hover:text-paper transition-colors">Close</button>
-        </div>
-      </div>
-    );
-  }
-
-  if (!isValidData) {
-    return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 modal-overlay">
-        <div className="bg-paper dark:bg-ink w-full max-w-sm p-12 flex flex-col items-center gap-6 border border-line dark:border-line-dark shadow-2xl">
-          <div className="w-10 h-10 border-2 border-ink/20 border-t-ink rounded-full animate-spin" />
-          <p className="micro-label opacity-40">Decrypting Files...</p>
-        </div>
-      </div>
-    );
-  }
 
   const specialFormName = form?.["special form"] || "";
   const isGigantamax = specialFormName.startsWith("Gigantamax") || specialFormName.startsWith("Eternamax");
@@ -145,12 +112,84 @@ export default function PokemonModal({ initialId, initialFormIndex = 0, onClose,
   
   const { src: cachedImageUrl, loading: imgLoading, error: imgError } = useImage(
     imageUrl, 
-    true, 
+    !!form, // Only enable if form is available
     () => onImageLoad && onImageLoad(id, currentFormIndex)
   );
 
-  const stats = form?.["base stats"]?.[0] || { hp: 0, atk: 0, def: 0, "sp.atk": 0, "sp.def": 0, speed: 0 };
-  const mainType = (form?.type?.[0] || "Unknown") as PokemonType;
+  // Keyboard navigation
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "ArrowRight") handleNext();
+      if (e.key === "ArrowLeft") handlePrev();
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [gallery.length, currentIndex]);
+
+  // Early returns for Loading / Error / Missing Data
+  if (loading && !detail) {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 modal-overlay" onClick={onClose}>
+        <motion.div 
+          initial={{ opacity: 0 }} 
+          animate={{ opacity: 1 }} 
+          className="fixed inset-0 bg-neutral-900/80 backdrop-blur-[4px] cursor-pointer" 
+        />
+        <motion.div 
+          initial={{ scale: 0.9, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          onClick={(e) => e.stopPropagation()}
+          className="relative bg-paper dark:bg-ink w-full max-w-sm p-12 flex flex-col items-center gap-8 border border-line dark:border-line-dark shadow-2xl z-10"
+        >
+          <div className="w-12 h-12 border-2 border-ink dark:border-paper border-t-transparent rounded-full animate-spin" />
+          <div className="text-center space-y-2">
+            <p className="micro-label font-black tracking-[0.2em]">Syncing Archive</p>
+            <p className="text-[10px] opacity-40 uppercase tracking-widest">Retrieving species data...</p>
+          </div>
+          <button onClick={onClose} className="micro-label px-6 py-2 border border-line opacity-40 hover:opacity-100 transition-all">Cancel</button>
+        </motion.div>
+      </div>
+    );
+  }
+
+  if (fetchError || (detail && (!detail["dex number"] || !allForms.length))) {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 modal-overlay" onClick={onClose}>
+        <motion.div 
+          initial={{ opacity: 0 }} 
+          animate={{ opacity: 1 }} 
+          className="fixed inset-0 bg-neutral-900/80 backdrop-blur-[4px] cursor-pointer" 
+        />
+        <motion.div 
+          initial={{ scale: 0.9, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          onClick={(e) => e.stopPropagation()}
+          className="relative bg-paper dark:bg-ink w-full max-w-md p-12 flex flex-col items-center gap-8 text-center border border-line dark:border-line-dark shadow-2xl z-10"
+        >
+          <HelpCircle size={40} strokeWidth={1} className="opacity-20" />
+          <div className="space-y-3">
+            <h3 className="font-display text-2xl font-black italic">Entry Incomplete</h3>
+            <p className="text-xs uppercase tracking-widest opacity-40 leading-relaxed px-4">
+              Detailed records for this species could not be retrieved from the archive.
+            </p>
+          </div>
+          <button 
+            onClick={onClose} 
+            className="micro-label px-8 py-3 border border-line hover:bg-ink dark:hover:bg-paper hover:text-paper dark:hover:text-ink transition-all"
+          >
+            Return to Grid
+          </button>
+        </motion.div>
+      </div>
+    );
+  }
+
+  // Ensure form exists before main render
+  if (!form || !detail) return null;
+
+  const stats = form["base stats"]?.[0] || { hp: 0, atk: 0, def: 0, "sp.atk": 0, "sp.def": 0, speed: 0 };
+  const mainType = (form.type?.[0] || "Unknown") as PokemonType;
   const accentColor = TYPE_COLORS[mainType] || "#888";
 
   // Navigation logic
@@ -205,58 +244,6 @@ export default function PokemonModal({ initialId, initialFormIndex = 0, onClose,
       if (newIdx !== -1) setCurrentIndex(newIdx);
     }
   };
-
-  // Keyboard navigation
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "ArrowRight") handleNext();
-      if (e.key === "ArrowLeft") handlePrev();
-      if (e.key === "Escape") onClose();
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [gallery.length, currentIndex]);
-
-  if (!detail && loading) {
-    return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 modal-overlay">
-        <motion.div 
-          initial={{ scale: 0.95, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          className="bg-paper dark:bg-ink w-full max-w-lg p-12 flex flex-col items-center gap-6 border border-line dark:border-line-dark shadow-2xl"
-        >
-          <div className="w-10 h-10 border-2 border-ink dark:border-paper border-t-transparent rounded-full animate-spin" />
-          <p className="micro-label opacity-40">Syncing with Archive...</p>
-        </motion.div>
-      </div>
-    );
-  }
-
-  if (fetchError || !detail) {
-    return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 modal-overlay" onClick={onClose}>
-        <div 
-          onClick={(e) => e.stopPropagation()}
-          className="bg-paper dark:bg-ink w-full max-w-lg p-12 flex flex-col items-center gap-8 text-center border border-line dark:border-line-dark shadow-2xl"
-        >
-          <HelpCircle size={40} strokeWidth={1} className="opacity-20" />
-          <div className="space-y-3">
-            <h3 className="font-display text-2xl font-black italic">Archive Incomplete</h3>
-            <p className="text-xs uppercase tracking-widest opacity-40 leading-relaxed px-4">
-              Detailed records for this Pokémon are still being curated by the artist.
-            </p>
-            {fetchError && <p className="text-[10px] font-mono opacity-20 mt-4 break-all">{(fetchError as Error).message}</p>}
-          </div>
-          <button 
-            onClick={onClose} 
-            className="micro-label px-8 py-3 border border-line dark:border-line-dark hover:bg-ink dark:hover:bg-paper hover:text-paper dark:hover:text-ink transition-all"
-          >
-            Return to Grid
-          </button>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center modal-overlay overflow-hidden p-4 md:p-8" onClick={onClose}>
