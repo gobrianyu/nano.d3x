@@ -1156,19 +1156,19 @@ export default function App() {
               {/* Mode Switcher */}
               <div className="flex items-center gap-0.5 bg-ink/5 rounded-full p-0.5">
                 <button 
-                  onClick={() => setViewMode("national")}
+                  onClick={() => handleViewModeChange("national")}
                   className={`flex-1 sm:flex-none px-3 sm:px-4 py-1.5 rounded-full micro-label transition-all ${viewMode === "national" ? "bg-paper text-ink shadow-sm font-bold" : "opacity-40 hover:opacity-100"}`}
                 >
                   Dex
                 </button>
                 <button 
-                  onClick={() => { setViewMode("mega"); setSelectedRegion("All"); }}
+                  onClick={() => handleViewModeChange("mega")}
                   className={`flex-1 sm:flex-none px-3 sm:px-4 py-1.5 rounded-full micro-label transition-all ${viewMode === "mega" ? (viewMode === 'gigantamax' ? "text-gmax hover:text-gmax" : "bg-paper text-ink shadow-sm font-bold") : "opacity-40 hover:opacity-100"}`}
                 >
                   Mega
                 </button>
                 <button 
-                  onClick={() => { setViewMode("gigantamax"); setSelectedRegion("All"); }}
+                  onClick={() => handleViewModeChange("gigantamax")}
                   className={`flex-1 sm:flex-none px-3 sm:px-4 py-1.5 rounded-full micro-label transition-all ${viewMode === "gigantamax" ? "bg-gmax !text-white shadow-sm font-black scale-105" : "opacity-40 hover:text-gmax hover:opacity-100"}`}
                 >
                   Gmax
