@@ -13,6 +13,7 @@ interface PokemonCardProps {
   targetFormIndex?: number;
   shinyMode: boolean;
   isGmaxMode?: boolean;
+  isMegaMode?: boolean;
   isSelected?: boolean;
   onImageLoad?: (id: number, formIndex: number) => void;
   isAllowedToLoad?: boolean;
@@ -26,6 +27,7 @@ export default function PokemonCard({
   targetFormIndex = 0, 
   shinyMode, 
   isGmaxMode, 
+  isMegaMode,
   isSelected, 
   onImageLoad,
   isAllowedToLoad = true,
@@ -80,23 +82,34 @@ export default function PokemonCard({
     <motion.button
       ref={ref}
       onClick={onClick}
-      className={`group relative aspect-[5/3] w-full flex items-center p-4 bg-transparent transition-all ring-2 cursor-pointer overflow-hidden z-10 ${isSelected ? (isGmaxMode ? 'ring-gmax' : 'ring-ink') : 'ring-transparent'} ${isGmaxMode ? 'hover:ring-gmax gmax-border-pulse' : 'hover:ring-ink'}`}
+      className={`group relative aspect-[5/3] w-full flex items-center p-4 bg-transparent transition-all ring-2 cursor-pointer overflow-hidden z-10 
+        ${isSelected ? (isGmaxMode ? 'ring-gmax' : isMegaMode ? 'ring-mega' : 'ring-ink') : 'ring-transparent'} 
+        ${isGmaxMode ? 'hover:ring-gmax gmax-border-pulse' : isMegaMode ? 'hover:ring-mega mega-border-pulse' : 'hover:ring-ink'}`}
     >
       {/* Name - Background subtle text */}
-      <div className={`absolute left-4 bottom-3 micro-label transition-all pointer-events-none z-10 ${isGmaxMode ? '!text-gmax/40 group-hover:!text-gmax group-hover:opacity-100 font-bold' : 'opacity-40 group-hover:opacity-100'}`}>
+      <div className={`absolute left-4 bottom-3 micro-label transition-all pointer-events-none z-10 
+        ${isGmaxMode ? '!text-gmax/40 group-hover:!text-gmax group-hover:opacity-100 font-bold' : 
+          isMegaMode ? '!text-mega/40 group-hover:!text-mega group-hover:opacity-100 font-bold' : 
+          'opacity-40 group-hover:opacity-100'}`}>
         {displayTitle}
       </div>
 
       {/* Dex ID - Top Right */}
-      <div className={`absolute top-3 right-4 micro-label transition-all origin-right z-10 ${isGmaxMode ? '!text-gmax/40 group-hover:!text-gmax opacity-100 group-hover:scale-110 font-bold' : 'text-ink opacity-40 group-hover:opacity-100 group-hover:scale-110'}`}>
+      <div className={`absolute top-3 right-4 micro-label transition-all origin-right z-10 
+        ${isGmaxMode ? '!text-gmax/40 group-hover:!text-gmax opacity-100 group-hover:scale-110 font-bold' : 
+          isMegaMode ? '!text-mega/40 group-hover:!text-mega opacity-100 group-hover:scale-110 font-bold' : 
+          'text-ink opacity-40 group-hover:opacity-100 group-hover:scale-110'}`}>
         {String(pokemon.id).padStart(4, "0")}
       </div>
       
       {/* Image - Left Centered */}
       <div className="h-full aspect-square flex items-center justify-center relative z-10">
-        {/* GMAX Gradient Background centered on image */}
+        {/* Theme Gradient Background centered on image */}
         {isGmaxMode && (
-          <div className="absolute inset-[-100%] gmax-gradient pointer-events-none z-[-1]" />
+          <div className="opacity-50 absolute inset-[-30%] gmax-gradient pointer-events-none z-[-1]" />
+        )}
+        {isMegaMode && (
+          <div className="opacity-50 absolute inset-[-30%] mega-gradient pointer-events-none z-[-1]" />
         )}
         {!imageError ? (
           <>

@@ -60,7 +60,7 @@ export default function LoadingScreen({ onComplete }: LoadingScreenProps) {
             transition={{ duration: 0.6, delay: 0.3 }}
             className="micro-label tracking-[0.3em] uppercase"
           >
-            Initialising Portfolio // Vol. 02
+            A Pokédex by nano.m0n
           </motion.p>
         </div>
 

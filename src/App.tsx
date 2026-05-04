@@ -55,6 +55,7 @@ export default function App() {
   const [isAppLoaded, setIsAppLoaded] = useState(false);
   const [viewMode, setViewMode] = useState<"national" | "mega" | "gigantamax">("national");
   const [showGmaxTransition, setShowGmaxTransition] = useState(false);
+  const [showMegaTransition, setShowMegaTransition] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const stickySearchInputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
@@ -170,6 +171,32 @@ export default function App() {
     };
   }, [selectedPokemonId]);
 
+  const handleViewModeChange = useCallback((newMode: "national" | "mega" | "gigantamax") => {
+    if (newMode === viewMode) return;
+
+    // Trigger transitions ONLY when entering a special mode
+    if (newMode === "gigantamax") {
+      setShowMegaTransition(false);
+      setShowGmaxTransition(true);
+      setTimeout(() => {
+        setViewMode(newMode);
+        setSelectedRegion("All");
+      }, 600);
+    } else if (newMode === "mega") {
+      setShowGmaxTransition(false);
+      setShowMegaTransition(true);
+      setTimeout(() => {
+        setViewMode(newMode);
+        setSelectedRegion("All");
+      }, 600);
+    } else {
+      // Returning to national: no transition animation, direct state change
+      setShowGmaxTransition(false);
+      setShowMegaTransition(false);
+      setViewMode("national");
+    }
+  }, [viewMode]);
+
   const handleClearSearch = () => {
     setSearchQuery("");
     searchInputRef.current?.blur();
@@ -179,7 +206,7 @@ export default function App() {
     setSearchQuery("");
     setSelectedRegion("All");
     setSelectedType("All");
-    setViewMode("national");
+    handleViewModeChange("national");
   };
 
   const filterSectionRef = useRef<HTMLDivElement>(null);
@@ -414,15 +441,26 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    if (viewMode === "gigantamax" && isAppLoaded) {
-      setShowGmaxTransition(true);
-      const timer = setTimeout(() => setShowGmaxTransition(false), 1500);
+    if (isAppLoaded) {
+      const duration = viewMode === "mega" ? 3000 : 1500;
+      const timer = setTimeout(() => {
+        setShowGmaxTransition(false);
+        setShowMegaTransition(false);
+      }, duration);
       return () => clearTimeout(timer);
     }
   }, [viewMode, isAppLoaded]);
 
+  useEffect(() => {
+    if (showGmaxTransition || showMegaTransition) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+  }, [showGmaxTransition, showMegaTransition]);
+
   return (
-    <div className={`${darkMode ? "dark" : ""} min-h-screen flex flex-col ${viewMode === "gigantamax" ? "selection:bg-gmax/20" : "selection:bg-ink/10"} bg-paper transition-colors`}>
+    <div className={`${darkMode ? "dark" : ""} min-h-screen flex flex-col ${viewMode === "gigantamax" ? "selection:bg-gmax/20" : viewMode === "mega" ? "selection:bg-mega/20" : "selection:bg-ink/10"} bg-paper transition-colors relative`}>
       <AnimatePresence>
         {!isAppLoaded && (
           <LoadingScreen onComplete={handleLoadingComplete} />
@@ -438,7 +476,7 @@ export default function App() {
               y: "100%",
               transition: { duration: 0.8, ease: [0.76, 0, 0.24, 1] } 
             }}
-            className="fixed inset-0 z-[100] flex items-center justify-center bg-paper/40 backdrop-blur-xl pointer-events-none overflow-hidden"
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-paper/40 backdrop-blur-xl pointer-events-auto overflow-hidden"
           >
             {/* Energy Shutters - Visual reveal panels */}
             <motion.div 
@@ -453,7 +491,7 @@ export default function App() {
             <div className="absolute inset-0 overflow-hidden opacity-5">
               {[...Array(10)].map((_, i) => (
                 <motion.div
-                  key={i}
+                  key={`gmax-glitch-${i}`}
                   initial={{ x: "-100%" }}
                   animate={{ x: "100%" }}
                   transition={{ 
@@ -471,7 +509,7 @@ export default function App() {
               {/* Swirling Energy Clouds */}
               {[0, 1, 2].map((i) => (
                 <motion.div
-                  key={i}
+                  key={`gmax-cloud-${i}`}
                   initial={{ scale: 0, opacity: 0, rotate: 0 }}
                   animate={{ 
                     scale: [0, 2, 5], 
@@ -523,7 +561,7 @@ export default function App() {
                 <div className="flex gap-4">
                   {[...Array(5)].map((_, i) => (
                     <motion.div
-                      key={i}
+                      key={`gmax-bar-${i}`}
                       animate={{ 
                         height: [4, 16, 4],
                         opacity: [0.3, 1, 0.3]
@@ -544,6 +582,50 @@ export default function App() {
               transition={{ duration: 1.5, ease: "linear" }}
               className="absolute left-0 w-full h-[2px] bg-gmax/50 shadow-[0_0_15px_#d0006f] z-[110]"
             />
+          </motion.div>
+        )}
+
+        {showMegaTransition && (
+          <motion.div
+            initial={{ opacity: 0, y: "0%" }}
+            animate={{ opacity: 1, y: "0%" }}
+            exit={{ 
+              y: "-100%",
+              transition: { duration: 0.4, ease: [0.32, 0, 0.67, 0] } 
+            }}
+            transition={{ duration: 0.6 }}
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-[#043B51] pointer-events-auto overflow-hidden"
+          >
+            {/* Background Repeating Text */}
+            <div className="absolute inset-0 z-0 opacity-[0.05] select-none pointer-events-none overflow-hidden flex flex-col items-center justify-center -rotate-[30deg] scale-150">
+              {[...Array(24)].map((_, i) => (
+                <div key={`mega-bg-loop-${i}`} className={`whitespace-nowrap text-white font-black text-2xl md:text-4xl tracking-widest leading-[1.2] ${i % 2 === 0 ? "ml-[-100px]" : "ml-[100px]"}`}>
+                  {Array(12).fill("MEGA EVOLUTION ").join("")}
+                </div>
+              ))}
+            </div>
+
+            <div className="relative flex flex-col items-center z-10">
+              <motion.div
+                initial={{ WebkitMaskPosition: "0% 0%" }}
+                animate={{ WebkitMaskPosition: "0% 100%" }}
+                transition={{ 
+                  duration: 1.2, 
+                  ease: "easeInOut" 
+                }}
+                style={{
+                  WebkitMaskImage: "linear-gradient(to bottom, transparent 0%, transparent 45%, black 55%, black 100%)",
+                  WebkitMaskSize: "100% 200%",
+                  WebkitMaskRepeat: "no-repeat",
+                }}
+              >
+                <img 
+                  src={`${CLOUDFRONT_ASSETS_URL}/mega.png`}
+                  className="w-48 h-48 md:w-64 md:h-64 object-contain"
+                  alt="Mega Evolution Symbol"
+                />
+              </motion.div>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
@@ -590,8 +672,8 @@ export default function App() {
                   </div>
                 )}
                 <div className="flex flex-col gap-1">
-                  <span className="micro-label opacity-60">FORMS REGISTERED</span>
-                  <span className={`text-2xl font-display font-black tracking-tight ${viewMode === 'gigantamax' ? 'text-gmax gmax-pulse' : ''}`}>{totalFormsRegistered}<span className="text-sm opacity-40 ml-1">/ {totalFormsCount}</span></span>
+                  <span className="micro-label opacity-60 uppercase">FORMS REGISTERED</span>
+                  <span className={`text-2xl font-display font-black tracking-tight ${viewMode === 'gigantamax' ? 'text-gmax gmax-pulse' : viewMode === 'mega' ? 'text-mega' : ''}`}>{totalFormsRegistered}<span className="text-sm opacity-40 ml-1">/ {totalFormsCount}</span></span>
                 </div>
               </div>
             </div>
@@ -602,16 +684,16 @@ export default function App() {
             <div className="flex flex-wrap items-center gap-x-12 gap-y-6">
               {/* Core View Modes */}
               <div className="flex items-center gap-6">
-                <div className={`flex items-center gap-4 bg-ink/5 p-1 rounded-full border transition-all ${viewMode === 'gigantamax' ? 'border-gmax/30 shadow-[0_0_15px_rgba(208,0,111,0.1)]' : 'border-line'}`}>
+                <div className={`flex items-center gap-4 bg-ink/5 p-1 rounded-full border transition-all ${viewMode === 'gigantamax' ? 'border-gmax/30 shadow-[0_0_15px_rgba(208,0,111,0.1)]' : viewMode === 'mega' ? 'border-mega/30 shadow-[0_0_15px_rgba(233,176,247,0.1)]' : 'border-line'}`}>
                   <button 
                     onClick={() => setShinyMode(false)}
-                    className={`px-4 py-1.5 cursor-pointer rounded-full micro-label transition-all ${!shinyMode ? (viewMode === 'gigantamax' ? "bg-gmax !text-white shadow-sm font-bold" : "bg-paper text-ink shadow-sm") : (viewMode === 'gigantamax' ? "text-gmax/60 hover:text-gmax" : "opacity-40 hover:opacity-100")}`}
+                    className={`px-4 py-1.5 cursor-pointer rounded-full micro-label transition-all ${!shinyMode ? (viewMode === 'gigantamax' ? "bg-gmax !text-white shadow-sm font-bold" : viewMode === 'mega' ? "bg-mega !text-white shadow-sm font-bold" : "bg-paper text-ink shadow-sm") : (viewMode === 'gigantamax' ? "text-gmax/60 hover:text-gmax" : viewMode === 'mega' ? "text-mega/60 hover:text-mega" : "opacity-40 hover:opacity-100")}`}
                   >
                     Classic
                   </button>
                   <button 
                     onClick={() => setShinyMode(true)}
-                    className={`px-4 py-1.5 cursor-pointer rounded-full micro-label transition-all ${shinyMode ? (viewMode === 'gigantamax' ? "bg-gmax !text-white shadow-sm font-bold" : "bg-paper text-ink shadow-sm") : (viewMode === 'gigantamax' ? "text-gmax/60 hover:text-gmax" : "opacity-40 hover:opacity-100")}`}
+                    className={`px-4 py-1.5 cursor-pointer rounded-full micro-label transition-all ${shinyMode ? (viewMode === 'gigantamax' ? "bg-gmax !text-white shadow-sm font-bold" : viewMode === 'mega' ? "bg-mega !text-white shadow-sm font-bold" : "bg-paper text-ink shadow-sm") : (viewMode === 'gigantamax' ? "text-gmax/60 hover:text-gmax" : viewMode === 'mega' ? "text-mega/60 hover:text-mega" : "opacity-40 hover:opacity-100")}`}
                   >
                     Shiny
                   </button>
@@ -620,28 +702,22 @@ export default function App() {
 
               {/* Form Expansion Placeholders */}
               <div className="flex items-center gap-8">
-                <div className={`h-4 w-px transition-colors ${viewMode === 'gigantamax' ? 'bg-gmax/30' : 'bg-line'}`} />
+                <div className={`h-4 w-px transition-colors ${viewMode === 'gigantamax' ? 'bg-gmax/30' : viewMode === 'mega' ? 'bg-mega/30' : 'bg-line'}`} />
                 <button 
-                  onClick={() => setViewMode("national")}
-                  className={`micro-label flex items-center gap-2 transition-all ${viewMode === "national" ? "text-ink font-bold" : (viewMode === 'gigantamax' ? "opacity-40 hover:opacity-100 hover:text-gmax" : "opacity-40 hover:opacity-100")}`}
+                  onClick={() => handleViewModeChange("national")}
+                  className={`micro-label flex items-center gap-2 transition-all ${viewMode === "national" ? "text-ink font-bold" : (viewMode === 'gigantamax' ? "opacity-40 hover:opacity-100 hover:text-gmax" : viewMode === 'mega' ? "opacity-40 hover:opacity-100 hover:text-mega" : "opacity-40 hover:opacity-100")}`}
                 >
                   <span>NATIONAL</span>
                 </button>
                 <button 
-                  onClick={() => {
-                    setViewMode("mega");
-                    setSelectedRegion("All");
-                  }}
-                  className={`micro-label flex items-center gap-2 transition-all ${viewMode === "mega" ? "text-ink font-bold" : (viewMode === 'gigantamax' ? "opacity-40 hover:opacity-100 hover:text-gmax" : "opacity-40 hover:opacity-100")}`}
+                  onClick={() => handleViewModeChange("mega")}
+                  className={`micro-label flex items-center gap-2 transition-all ${viewMode === "mega" ? "!text-mega font-bold scale-105" : (viewMode === 'gigantamax' ? "opacity-40 hover:opacity-100 hover:text-gmax" : "opacity-40 hover:opacity-100")}`}
                 >
                   <span>MEGA EVOLUTIONS</span>
                 </button>
                 <button 
-                  onClick={() => {
-                    setViewMode("gigantamax");
-                    setSelectedRegion("All");
-                  }}
-                  className={`micro-label flex items-center gap-2 transition-all ${viewMode === "gigantamax" ? "!text-gmax font-bold scale-105" : "opacity-40 hover:opacity-100"}`}
+                  onClick={() => handleViewModeChange("gigantamax")}
+                  className={`micro-label flex items-center gap-2 transition-all ${viewMode === "gigantamax" ? "!text-gmax font-bold scale-105" : (viewMode === 'mega' ? "opacity-40 hover:opacity-100 hover:text-mega" : "opacity-40 hover:opacity-100")}`}
                 >
                   <span>GIGANTAMAX</span>
                 </button>
@@ -651,9 +727,9 @@ export default function App() {
             {/* Global Theme Toggle */}
             <button 
               onClick={() => setDarkMode(!darkMode)}
-              className={`flex cursor-pointer items-center gap-3 micro-label transition-all group ${viewMode === 'gigantamax' ? 'text-gmax opacity-100' : 'opacity-40 hover:opacity-100'}`}
+              className={`flex cursor-pointer items-center gap-3 micro-label transition-all group ${viewMode === 'gigantamax' ? 'text-gmax opacity-100' : viewMode === 'mega' ? 'text-mega opacity-100' : 'opacity-40 hover:opacity-100'}`}
             >
-              <div className={`w-10 h-10 rounded-full border flex items-center justify-center transition-all ${viewMode === 'gigantamax' ? 'border-gmax/30 text-gmax shadow-[0_0_15px_rgba(208,0,111,0.1)] group-hover:border-gmax' : 'border-line group-hover:border-ink'}`}>
+              <div className={`w-10 h-10 rounded-full border flex items-center justify-center transition-all ${viewMode === 'gigantamax' ? 'border-gmax/30 text-gmax shadow-[0_0_15px_rgba(208,0,111,0.1)] group-hover:border-gmax' : viewMode === 'mega' ? 'border-mega/30 text-mega shadow-[0_0_15px_rgba(233,176,247,0.1)] group-hover:border-mega' : 'border-line group-hover:border-ink'}`}>
                 {darkMode ? <Sun size={14} /> : <Moon size={14} />}
               </div>
             </button>
@@ -756,7 +832,7 @@ export default function App() {
                   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2">
                     {(activeFilter === "region" ? ["All", ...REGIONS.map(r => r.name)] : ["All", ...TYPE_LIST]).map((option) => (
                       <button
-                        key={option}
+                        key={`filter-${activeFilter}-${option}`}
                         onClick={() => {
                           if (activeFilter === "region") setSelectedRegion(option);
                           else setSelectedType(option as PokemonType | "All");
@@ -790,22 +866,44 @@ export default function App() {
         </div>
 
         {/* The Exhibition Grid */}
-        <div className="flex flex-col museum-grid">
+        <section className="relative group/grid">
+          {/* Edge Streak Animations - Only in Mega Mode */}
+          {viewMode === "mega" && (
+            <div className="absolute -inset-px pointer-events-none z-30 overflow-hidden">
+              {/* Path A: Top (L to R) then Right (T to B) */}
+              <div className="absolute top-0 left-0 w-full h-px overflow-hidden">
+                <div className="absolute top-0 left-[-20%] w-[30%] h-full bg-gradient-to-r from-transparent via-mega to-transparent streak-h" />
+              </div>
+              <div className="absolute top-0 right-0 w-px h-full overflow-hidden">
+                <div className="absolute top-[-20%] right-0 w-full h-[30%] bg-gradient-to-b from-transparent via-mega to-transparent streak-v" style={{ animationDelay: '1.52s' }} />
+              </div>
+
+              {/* Path B: Left (T to B) then Bottom (L to R) */}
+              <div className="absolute top-0 left-0 w-px h-full overflow-hidden">
+                <div className="absolute top-[-20%] left-0 w-full h-[30%] bg-gradient-to-b from-transparent via-mega to-transparent streak-v" />
+              </div>
+              <div className="absolute bottom-0 left-0 w-full h-px overflow-hidden">
+                <div className="absolute bottom-0 left-[-20%] w-[30%] h-full bg-gradient-to-r from-transparent via-mega to-transparent streak-h" style={{ animationDelay: '1.52s' }} />
+              </div>
+            </div>
+          )}
+
+          <div className="flex flex-col museum-grid transition-all duration-500">
           {sections ? (
             sections.map((section) => (
               <div key={section.name} className="relative">
-                <div className={`sticky ${showHeaderSticky ? "top-16" : "top-0"} z-20 backdrop-blur-md border-b border-line py-4 px-6 flex justify-between items-center h-14 transition-all duration-300 ${viewMode === "gigantamax" ? "border-gmax/30" : ""}`}>
+                <div className={`sticky ${showHeaderSticky ? "top-16" : "top-0"} z-20 backdrop-blur-md border-b border-line py-4 px-6 flex justify-between items-center h-14 transition-all duration-300 ${viewMode === "gigantamax" ? "border-gmax/30" : viewMode === "mega" ? "border-mega/30" : ""}`}>
                   <div className="flex items-center gap-4">
-                    <div className={`w-1 h-3 ${viewMode === "gigantamax" ? "bg-gmax gmax-pulse" : "bg-ink"}`} />
-                    <span className={`micro-label font-black tracking-[0.4em] text-[10px] ${viewMode === "gigantamax" ? "text-gmax" : "text-ink"}`}>{section.name.toUpperCase()}</span>
+                    <div className={`w-1 h-3 ${viewMode === "gigantamax" ? "bg-gmax gmax-pulse" : viewMode === "mega" ? "bg-mega mega-pulse" : "bg-ink"}`} />
+                    <span className={`micro-label font-black tracking-[0.4em] text-[10px] ${viewMode === "gigantamax" ? "text-gmax" : viewMode === "mega" ? "text-mega" : "text-ink"}`}>{section.name.toUpperCase()}</span>
                   </div>
                   <div className="flex items-center gap-6">
-                    <span className={`micro-label font-bold whitespace-nowrap opacity-40 ${viewMode === 'gigantamax' ? 'text-ink' : ''}`}>
-                      <span className={viewMode === 'gigantamax' ? 'text-gmax gmax-pulse opacity-100' : ''}>{section.registeredCount}</span> / {section.count} <span className="hidden sm:inline">ENTRIES</span>
+                    <span className={`micro-label font-bold whitespace-nowrap opacity-40 ${viewMode === 'gigantamax' || viewMode === 'mega' ? 'text-ink' : ''}`}>
+                      <span className={viewMode === 'gigantamax' ? 'text-gmax gmax-pulse opacity-100' : viewMode === 'mega' ? 'text-mega mega-pulse opacity-100' : ''}>{section.registeredCount}</span> / {section.count} <span className="hidden sm:inline">ENTRIES</span>
                     </span>
                     <div className="w-24 h-[1px] bg-line relative hidden sm:block">
                       <div 
-                        className={`absolute left-0 top-0 h-full transition-all duration-1000 ${viewMode === "gigantamax" ? "bg-gmax gmax-glow" : "bg-ink"}`} 
+                        className={`absolute left-0 top-0 h-full transition-all duration-1000 ${viewMode === "gigantamax" ? "bg-gmax gmax-glow" : viewMode === "mega" ? "bg-mega mega-glow" : "bg-ink"}`} 
                         style={{ width: `${(section.registeredCount / section.count) * 100}%` }} 
                       />
                     </div>
@@ -819,6 +917,7 @@ export default function App() {
                       targetFormIndex={pokemon.matchedFormIndex}
                       shinyMode={shinyMode}
                       isGmaxMode={viewMode === 'gigantamax'}
+                      isMegaMode={viewMode === 'mega'}
                       isSelected={selectedPokemonId === pokemon.id}
                       onImageLoad={trackImageLoad}
                       isAllowedToLoad={(idToIndexMap.get(pokemon.id) ?? 9999) <= loadingCursor}
@@ -841,6 +940,7 @@ export default function App() {
                   targetFormIndex={pokemon.matchedFormIndex}
                   shinyMode={shinyMode}
                   isGmaxMode={viewMode === 'gigantamax'}
+                  isMegaMode={viewMode === 'mega'}
                   isSelected={selectedPokemonId === pokemon.id}
                   onImageLoad={trackImageLoad}
                   isAllowedToLoad={(idToIndexMap.get(pokemon.id) ?? 9999) <= loadingCursor}
@@ -854,6 +954,7 @@ export default function App() {
             </div>
           )}
         </div>
+      </section>
 
         {filteredIndex.length === 0 && !loading && (
           <div className="py-60 flex flex-col items-center justify-center text-center space-y-6">
@@ -868,8 +969,8 @@ export default function App() {
         <div className="space-y-6 max-w-md">
           <h3 className="micro-label text-ink dark:text-paper">Poké.d3x / By @nano.m0n</h3>
           <p className="text-[11px] leading-relaxed font-medium">
-            A curated visual archive presenting reimagined creatures in an editorial context. 
-            All original illustrations are part of the nano.m0n collection. 
+            由「ナノ」绘制的全部宝可梦视觉作品集。<br/>
+            A visual portfolio collection of all Pokémon, illustrated by nano.m0n. 
             Pokémon is a trademark of Nintendo, Creatures Inc., and GAME FREAK.
           </p>
         </div>
@@ -964,7 +1065,7 @@ export default function App() {
                             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                               {["All", ...REGIONS.map(r => r.name)].map((option) => (
                                 <button
-                                  key={option}
+                                  key={`sticky-reg-${option}`}
                                   onClick={() => {
                                     setSelectedRegion(option);
                                     setActiveFilter(null);
@@ -987,7 +1088,7 @@ export default function App() {
                             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                               {["All", ...TYPE_LIST].map((option) => (
                                 <button
-                                  key={option}
+                                  key={`sticky-type-${option}`}
                                   onClick={() => {
                                     setSelectedType(option as PokemonType | "All");
                                     setActiveFilter(null);
@@ -1114,6 +1215,7 @@ export default function App() {
             onImageLoad={trackImageLoad}
             filteredList={filteredIndex.map(p => ({ id: p.id, matchedFormIndex: p.matchedFormIndex || 0 }))}
             isGimmickOnly={viewMode !== "national"}
+            viewMode={viewMode}
           />
         )}
       </AnimatePresence>

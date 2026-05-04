@@ -24,9 +24,10 @@ interface PokemonModalProps {
   onImageLoad?: (id: number, formIndex: number) => void;
   filteredList: GalleryItem[];
   isGimmickOnly?: boolean;
+  viewMode?: string;
 }
 
-export default function PokemonModal({ initialId, initialFormIndex = 0, onClose, indexData, shinyMode, onImageLoad, filteredList, isGimmickOnly = false }: PokemonModalProps) {
+export default function PokemonModal({ initialId, initialFormIndex = 0, onClose, indexData, shinyMode, onImageLoad, filteredList, isGimmickOnly = false, viewMode }: PokemonModalProps) {
   // Gallery state: initialized from the filtered grid, but can grow with evolution jumps
   const [gallery, setGallery] = useState<GalleryItem[]>(() => {
     // Ensure the initial item is in the gallery
@@ -106,6 +107,7 @@ export default function PokemonModal({ initialId, initialFormIndex = 0, onClose,
 
   const specialFormName = form?.["special form"] || "";
   const isGigantamax = specialFormName.startsWith("Gigantamax") || specialFormName.startsWith("Eternamax");
+  const isMega = specialFormName.startsWith("Mega") && viewMode === "mega";
 
   const imageKey = `image asset ${gender}${shinyMode ? " shiny" : ""}` as keyof PokemonForm;
   const imageUrl = form ? `${BASE_IMAGE_URL}/${form[imageKey] || "unknown.png"}` : "";
@@ -140,12 +142,12 @@ export default function PokemonModal({ initialId, initialFormIndex = 0, onClose,
           initial={{ scale: 0.9, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           onClick={(e) => e.stopPropagation()}
-          className="relative bg-paper dark:bg-ink w-full max-w-sm p-12 flex flex-col items-center gap-8 border border-line dark:border-line-dark shadow-2xl z-10"
+          className={`relative bg-paper dark:bg-ink w-full max-w-sm p-12 flex flex-col items-center gap-8 border shadow-2xl z-10 border-line dark:border-line-dark`}
         >
-          <div className="w-12 h-12 border-2 border-ink dark:border-paper border-t-transparent rounded-full animate-spin" />
+          <div className={`w-12 h-12 border-2 border-t-transparent rounded-full animate-spin ${isGigantamax ? 'border-gmax' : isMega ? 'border-mega' : 'border-ink dark:border-paper'}`} />
           <div className="text-center space-y-2">
-            <p className="micro-label font-black tracking-[0.2em]">Syncing Archive</p>
-            <p className="text-[10px] opacity-40 uppercase tracking-widest">Retrieving species data...</p>
+            <p className={`micro-label font-black tracking-[0.2em]`}>Loading</p>
+            <p className="text-[10px] opacity-40 uppercase tracking-widest">Fetching data...</p>
           </div>
           <button onClick={onClose} className="micro-label px-6 py-2 border border-line opacity-40 hover:opacity-100 transition-all">Cancel</button>
         </motion.div>
@@ -259,7 +261,9 @@ export default function PokemonModal({ initialId, initialFormIndex = 0, onClose,
           <div 
             onClick={(e) => e.stopPropagation()}
             style={{ touchAction: "pan-y" }}
-            className={`bg-paper shadow-[0_32px_64px_-16px_rgba(0,0,0,0.3)] overflow-hidden relative flex z-10 text-ink border border-line pointer-events-auto transition-all duration-300 min-h-0 ${
+            className={`bg-paper shadow-[0_32px_64px_-16px_rgba(0,0,0,0.3)] overflow-hidden relative flex z-10 text-ink border pointer-events-auto transition-all duration-300 min-h-0 ${
+              isGigantamax ? 'border-gmax gmax-border-pulse' : isMega ? 'border-mega' : 'border-line'
+            } ${
               isPortrait 
                 ? "flex-col w-[min(94vw,500px)] flex-1" 
                 : "flex-row aspect-[5/3] w-[min(98vw,calc((100vh-180px)*5/3),1200px)]"
@@ -269,7 +273,7 @@ export default function PokemonModal({ initialId, initialFormIndex = 0, onClose,
             <div className="absolute top-6 right-6 z-50 pointer-events-none">
               <button 
                 onClick={onClose}
-                className="pointer-events-auto cursor-pointer bg-paper border border-line px-3 py-1.5 micro-label hover:bg-ink hover:text-paper transition-all shadow-sm"
+                className={`pointer-events-auto cursor-pointer bg-paper border border-line px-3 py-1.5 micro-label transition-all shadow-sm hover:bg-ink hover:text-paper text-ink`}
               >
                 Close
               </button>
@@ -281,7 +285,7 @@ export default function PokemonModal({ initialId, initialFormIndex = 0, onClose,
                   <div className="flex flex-col w-full h-auto">
                     {/* Header */}
                     <div className="px-8 py-6 space-y-4 shrink-0">
-                      <span className="font-display text-xl font-black tracking-tighter">
+                      <span className={`font-display text-xl font-black tracking-tighter ${isGigantamax ? 'text-gmax' : isMega ? 'text-mega' : ''}`}>
                         #{String(detail["dex number"]).padStart(4, "0")}
                       </span>
                       <div className="flex items-baseline gap-2 overflow-visible min-w-0 w-full">
@@ -290,25 +294,38 @@ export default function PokemonModal({ initialId, initialFormIndex = 0, onClose,
                             mode: "single",
                             max: 40, 
                             min: 16,
-                            className: "font-display font-black tracking-tighter leading-[0.9] pb-1 whitespace-nowrap w-full",
+                            className: `font-display font-black tracking-tighter leading-[1.2] px-1 pb-1 whitespace-nowrap w-full ${isGigantamax ? 'bg-gradient-to-b from-white from-0% via-white via-35% via-[#d0006f] via-55% to-[#d0006f] to-100% bg-clip-text text-transparent drop-shadow-[0_2px_4px_rgba(208,0,111,0.3)]' : 'text-ink'}`,
                             children: form.name
                           } as any)}
                         />
                       </div>
                       {form["special form"] && (
                         <div className="flex items-center gap-3 pt-4">
-                          <div className="w-1.5 h-1.5 rounded-full bg-ink/20" />
-                          <span className="text-[11px] font-bold tracking-[0.2em] opacity-80 uppercase leading-none">{form["special form"]}</span>
+                          {isGigantamax ? (
+                            <div className="flex items-center gap-2">
+                              <img src={`${CLOUDFRONT_ASSETS_URL}/gmax.png`} alt="G-Max" className="w-5 h-5 object-contain" onError={(e) => (e.currentTarget.style.display = "none")} />
+                              <span className="text-[11px] font-bold tracking-[0.2em] uppercase leading-none text-gmax">GIGANTAMAX</span>
+                            </div>
+                          ) : (
+                            <>
+                              <div className={`w-1.5 h-1.5 rounded-full bg-ink/20`} />
+                              <span className={`text-[11px] font-bold tracking-[0.2em] uppercase leading-none opacity-80`}>{form["special form"]}</span>
+                            </>
+                          )}
                         </div>
                       )}
                     </div>
 
                     {/* Image */}
-                    <div className="relative aspect-square flex flex-col items-center justify-center shiny-gradient bg-white dark:bg-black/20 shrink-0 border-t border-b border-line">
+                    <div className={`relative aspect-square flex flex-col items-center justify-center shrink-0 border-t border-b border-line ${
+                      isGigantamax ? 'bg-gmax-soft gmax-gradient' : 
+                      isMega ? 'bg-mega-soft mega-gradient' : 
+                      'shiny-gradient bg-white dark:bg-black/20'
+                    }`}>
                       <div className="w-full h-full flex items-center justify-center p-8 relative">
                         {imgLoading && !imgError && (
                           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                            <div className="w-10 h-10 border border-ink/5 border-t-ink rounded-full animate-spin" />
+                            <div className={`w-10 h-10 border border-t-current rounded-full animate-spin ${isGigantamax ? 'text-gmax' : isMega ? 'text-mega' : 'text-ink'}`} />
                           </div>
                         )}
                         {!imgError && !imgLoading && cachedImageUrl ? (
@@ -316,7 +333,11 @@ export default function PokemonModal({ initialId, initialFormIndex = 0, onClose,
                               src={cachedImageUrl}
                               alt={form.name}
                               referrerPolicy="no-referrer"
-                              className="max-w-full max-h-full object-contain drop-shadow-[0_20px_60px_rgba(0,0,0,0.08)] dark:drop-shadow-[0_20px_60px_rgba(255,255,255,0.03)] transition-opacity duration-300 opacity-100"
+                              className={`max-w-full max-h-full object-contain transition-opacity duration-300 opacity-100 ${
+                                isGigantamax ? 'drop-shadow-[0_20px_60px_rgba(208,0,111,0.3)]' : 
+                                isMega ? 'drop-shadow-[0_20px_60px_rgba(233,176,247,0.3)]' : 
+                                'drop-shadow-[0_20px_60px_rgba(0,0,0,0.08)] dark:drop-shadow-[0_20px_60px_rgba(255,255,255,0.03)]'
+                              }`}
                             />
                         ) : !imgLoading && imgError ? (
                           <div className="flex flex-col items-center gap-4 text-center opacity-20">
@@ -335,15 +356,17 @@ export default function PokemonModal({ initialId, initialFormIndex = 0, onClose,
                               {allForms.map((f, i) => {
                                 const isHovered = hoveredFormIndex === i;
                                 const isActive = i === currentFormIndex;
+                                const fName = f?.["special form"] || "";
+                                const fIsGmax = fName.startsWith("Gigantamax") || fName.startsWith("Eternamax");
                                 return (
-                                  <div key={i} className="relative flex items-center justify-end group/form cursor-pointer select-none" onMouseEnter={() => setHoveredFormIndex(i)} onClick={() => handleFormSelect(i)}>
+                                  <div key={`form-p-${i}`} className="relative flex items-center justify-end group/form cursor-pointer select-none" onMouseEnter={() => setHoveredFormIndex(i)} onClick={() => handleFormSelect(i)}>
                                     <AnimatePresence>
                                       {isHovered && (
                                         <motion.div initial={{ opacity: 0, x: 20, scale: 0.8 }} animate={{ opacity: 1, x: 0, scale: 1 }} exit={{ opacity: 0, x: 10, scale: 0.9 }} className="absolute right-full mr-8 bg-ink text-paper px-3 py-2 whitespace-nowrap shadow-2xl z-50 pointer-events-none italic border border-paper/10 text-[10px] font-mono font-bold uppercase tracking-[0.2em]">{f?.["special form"] || f?.name || "???"}</motion.div>
                                       )}
                                     </AnimatePresence>
                                     <div className="w-12 h-5 flex items-center justify-end group-hover/selector:pr-1 transition-all">
-                                      <motion.div animate={{ width: (isActive ? 40 : 10) * (isHovered ? 2.5 : 1), height: (isActive ? 4 : 3), opacity: isActive || isHovered ? 1 : 0.4 }} className={`rounded-full origin-right ${isActive || isHovered ? "bg-ink" : "bg-ink/30"}`} />
+                                      <motion.div animate={{ width: (isActive ? 40 : 10) * (isHovered ? 2.5 : 1), height: (isActive ? 4 : 3), opacity: isActive || isHovered ? 1 : 0.4 }} className={`rounded-full origin-right ${isActive || isHovered ? (fIsGmax && viewMode === "gigantamax" ? "bg-gmax shadow-[0_0_8px_rgba(208,0,111,0.5)]" : "bg-ink") : "bg-ink/30"}`} />
                                     </div>
                                   </div>
                                 );
@@ -357,29 +380,29 @@ export default function PokemonModal({ initialId, initialFormIndex = 0, onClose,
                     {/* Details Panel (Portrait) */}
                     <div className="w-full px-6 py-8 pb-24 shrink-0 flex flex-col">
                       <div className="flex flex-wrap gap-2 mb-8 min-w-0">
-                        {form.type.map((t) => (
-                          <span key={t} className="flex items-center gap-2 font-mono text-[10px] font-black uppercase tracking-wider px-2.5 py-1 bg-transparent micro-label border border-line max-w-full text-zinc-900 dark:text-zinc-100">
+                        {form.type.map((t, idx) => (
+                          <span key={`type-p-${t}-${idx}`} className={`flex items-center gap-2 font-mono text-[10px] font-black uppercase tracking-wider px-2.5 py-1 bg-transparent micro-label border max-w-full border-line text-zinc-900 dark:text-zinc-100`}>
                             <img src={`${CLOUDFRONT_ASSETS_URL}/type-icons/${t.toLowerCase()}-type-icon.png`} alt={t} className="w-3.5 h-3.5 object-contain shrink-0" onError={(e) => (e.currentTarget.style.display = "none")} />
                             <span className="truncate">{t}</span>
                           </span>
                         ))}
                       </div>
                       <section className="mb-12 space-y-4 min-w-0">
-                        <p className="font-display text-xl font-black text-ink uppercase tracking-[0.3em] leading-none break-words tracking-tight">{form.category} Pokémon</p>
+                        <p className={`font-display text-xl font-black uppercase tracking-[0.3em] leading-tight break-words tracking-tight text-ink`}>{form.category} Pokémon</p>
                         <div className="space-y-4">
                           <span className="micro-label opacity-30 block">D3x Entry</span>
-                          <p className="text-sm font-medium leading-relaxed italic border-l-[3px] border-line pl-6 py-1 break-words">"{form.entry}"</p>
+                          <p className={`text-sm font-medium leading-relaxed italic border-l-[3px] pl-6 py-1 break-words border-line`}>"{form.entry}"</p>
                         </div>
                       </section>
                       <div className="space-y-12 min-w-0">
-                        <section className="grid grid-cols-2 gap-10 border-b border-line pb-12">
+                        <section className={`grid grid-cols-2 gap-10 border-b pb-12 border-line`}>
                           <div className="space-y-2 min-w-0">
                             <span className="micro-label opacity-40">Height</span>
-                            <p className="font-display font-bold text-3xl tracking-tighter">{(form.height / 100).toFixed(1)}{isGigantamax && "+"}<span className="text-xs ml-1 opacity-40">M</span></p>
+                            <p className={`font-display font-bold text-3xl tracking-tighter ${isGigantamax ? 'text-gmax' : ''}`}>{(form.height / 100).toFixed(1)}{(isGigantamax || isMega) && "+"}<span className="text-xs ml-1 opacity-40">M</span></p>
                           </div>
                           <div className="space-y-2 min-w-0">
                             <span className="micro-label opacity-40">Weight</span>
-                            <p className="font-display font-bold text-3xl tracking-tighter">{form.weight === -1 ? "???" : form.weight}{form.weight !== -1 && <span className="text-xs ml-1 opacity-40">KG</span>}</p>
+                            <p className={`font-display font-bold text-3xl tracking-tighter ${isGigantamax ? 'text-gmax' : ''}`}>{form.weight === -1 ? "???" : form.weight}{form.weight !== -1 && <span className="text-xs ml-1 opacity-40">KG</span>}</p>
                           </div>
                         </section>
                         <section className="space-y-6 min-w-0">
@@ -394,7 +417,7 @@ export default function PokemonModal({ initialId, initialFormIndex = 0, onClose,
                           </div>
                         </section>
                         {!isGimmick && !isGimmickOnly && (
-                          <section className="space-y-6 pt-12 border-t border-line min-w-0">
+                          <section className={`space-y-6 pt-12 border-t min-w-0 border-line`}>
                             <span className="micro-label opacity-40">Evolutionary Line</span>
                             <div className="w-full flex justify-center py-4">
                               <EvolutionChain indexData={indexData} shinyMode={shinyMode} currentId={Number(form.key) || detail["dex number"] + currentFormIndex / 100} onSelect={handleJumpToPokemon} />
@@ -407,11 +430,15 @@ export default function PokemonModal({ initialId, initialFormIndex = 0, onClose,
                 ) : (
                   <>
                     {/* Image Area - Desktop */}
-                    <div className="relative aspect-square h-full flex flex-col items-center justify-center shiny-gradient bg-white dark:bg-black/20 shrink-0 border-r border-line">
+                    <div className={`relative aspect-square h-full flex flex-col items-center justify-center shrink-0 border-r border-line ${
+                      isGigantamax ? 'bg-gmax-soft gmax-gradient' : 
+                      isMega ? 'bg-mega-soft mega-gradient' : 
+                      'shiny-gradient bg-white dark:bg-black/20'
+                    }`}>
                       <div className="absolute top-8 left-8 right-8 flex justify-between items-start z-10 pointer-events-none">
                         <div className="flex flex-col gap-1">
                           <span className="micro-label">Dex ID</span>
-                          <span className="font-display text-4xl font-black tracking-tighter">#{String(detail["dex number"]).padStart(4, "0")}</span>
+                          <span className={`font-display text-4xl font-black tracking-tighter ${isGigantamax ? 'text-gmax' : isMega ? 'text-mega' : ''}`}>#{String(detail["dex number"]).padStart(4, "0")}</span>
                         </div>
                       </div>
                       {detail.gendered && !isGimmick && (
@@ -431,11 +458,15 @@ export default function PokemonModal({ initialId, initialFormIndex = 0, onClose,
                       <div className="w-full h-full flex items-center justify-center p-8 relative">
                         {imgLoading && !imgError && (
                           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                            <div className="w-10 h-10 border border-ink/5 border-t-ink rounded-full animate-spin" />
+                            <div className={`w-10 h-10 border border-t-current rounded-full animate-spin ${isGigantamax ? 'text-gmax' : isMega ? 'text-mega' : 'text-ink'}`} />
                           </div>
                         )}
                         {!imgError && !imgLoading && cachedImageUrl ? (
-                            <img src={cachedImageUrl} alt={form.name} referrerPolicy="no-referrer" className="max-w-full max-h-full object-contain drop-shadow-[0_20px_60px_rgba(0,0,0,0.08)] transition-opacity duration-300 opacity-100" />
+                            <img src={cachedImageUrl} alt={form.name} referrerPolicy="no-referrer" className={`max-w-full max-h-full object-contain transition-opacity duration-300 opacity-100 ${
+                              isGigantamax ? 'drop-shadow-[0_20px_60px_rgba(208,0,111,0.3)]' : 
+                              isMega ? 'drop-shadow-[0_20px_60px_rgba(233,176,247,0.3)]' : 
+                              'drop-shadow-[0_20px_60px_rgba(0,0,0,0.08)]'
+                            }`} />
                         ) : !imgLoading && imgError ? (
                           <div className="flex flex-col items-center gap-4 text-center opacity-20">
                             <span className="font-display text-9xl font-black italic">?</span>
@@ -446,14 +477,18 @@ export default function PokemonModal({ initialId, initialFormIndex = 0, onClose,
                       {allForms.length > 1 && !isGimmickOnly && (
                         <div className="absolute top-1/2 -translate-y-1/2 right-0 flex flex-col items-end z-40 group/selector pointer-events-none" onMouseLeave={() => setHoveredFormIndex(null)}>
                           <div className="flex flex-col gap-0.5 items-end max-h-[80vh] min-w-[500px] overflow-y-auto no-scrollbar py-20 pr-6 pl-[300px] scroll-smooth pointer-events-auto">
-                            {allForms.map((f, i) => (
-                              <div key={i} className="relative flex items-center justify-end group/form cursor-pointer select-none" onMouseEnter={() => setHoveredFormIndex(i)} onClick={() => handleFormSelect(i)}>
-                                <AnimatePresence>{hoveredFormIndex === i && <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 10 }} className="absolute right-full mr-8 bg-ink text-paper px-3 py-2 whitespace-nowrap shadow-2xl z-50 italic border border-paper/10 text-[10px] font-mono font-bold uppercase tracking-[0.2em]">{f?.["special form"] || f?.name || "???"}</motion.div>}</AnimatePresence>
-                                <div className="w-12 h-5 flex items-center justify-end transition-all">
-                                  <motion.div animate={{ width: (i === currentFormIndex ? 40 : 10) * (hoveredFormIndex === i ? 2.5 : 1), height: (i === currentFormIndex ? 4 : 3), opacity: i === currentFormIndex || hoveredFormIndex === i ? 1 : 0.4 }} className={`rounded-full origin-right ${i === currentFormIndex || hoveredFormIndex === i ? "bg-ink" : "bg-ink/30"}`} />
+                            {allForms.map((f, i) => {
+                              const fName = f?.["special form"] || f?.name || "";
+                              const fIsGmax = fName.startsWith("Gigantamax") || fName.startsWith("Eternamax");
+                              return (
+                                <div key={`form-d-${i}`} className="relative flex items-center justify-end group/form cursor-pointer select-none" onMouseEnter={() => setHoveredFormIndex(i)} onClick={() => handleFormSelect(i)}>
+                                  <AnimatePresence>{hoveredFormIndex === i && <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 10 }} className={`absolute right-full mr-8 px-3 py-2 whitespace-nowrap shadow-2xl z-50 italic border text-[10px] font-mono font-bold uppercase tracking-[0.2em] bg-ink text-paper border-paper/10`}>{f?.["special form"] || f?.name || "???"}</motion.div>}</AnimatePresence>
+                                  <div className="w-12 h-5 flex items-center justify-end transition-all">
+                                    <motion.div animate={{ width: (i === currentFormIndex ? 40 : 10) * (hoveredFormIndex === i ? 2.5 : 1), height: (i === currentFormIndex ? 4 : 3), opacity: i === currentFormIndex || hoveredFormIndex === i ? 1 : 0.4 }} className={`rounded-full origin-right ${i === currentFormIndex || hoveredFormIndex === i ? (fIsGmax && viewMode === "gigantamax" ? "bg-gmax shadow-[0_0_8px_rgba(208,0,111,0.5)]" : "bg-ink") : "bg-ink/30"}`} />
+                                  </div>
                                 </div>
-                              </div>
-                            ))}
+                              );
+                            })}
                           </div>
                         </div>
                       )}
@@ -463,16 +498,31 @@ export default function PokemonModal({ initialId, initialFormIndex = 0, onClose,
                     <div className="flex flex-col relative box-border md:w-5/12 px-8 py-12 lg:px-10 overflow-y-auto custom-scrollbar">
                       <header className="mb-12">
                         <div className="flex flex-col gap-4">
-                          <Textfit {...({ mode: "single", max: 80, min: 20, className: "font-display font-black tracking-tighter leading-[0.85] pb-4 whitespace-nowrap", children: form.name } as any)} />
+                          <Textfit {...({ 
+                            mode: "single", 
+                            max: 80, 
+                            min: 20, 
+                            className: `font-display font-black tracking-tighter leading-[1.2] px-1 pb-4 whitespace-nowrap ${isGigantamax ? 'bg-gradient-to-b from-white to-[#d0006f] bg-clip-text text-transparent drop-shadow-[0_4px_8px_rgba(208,0,111,0.3)]' : 'text-ink'}`, 
+                            children: form.name 
+                          } as any)} />
                           {form["special form"] && (
                             <div className="flex items-center gap-3 mb-2">
-                              <div className="w-2 h-2 rounded-full bg-ink/10" />
-                              <span className="text-xs font-bold tracking-[0.2em] opacity-90 uppercase leading-none">{form["special form"]}</span>
+                              {isGigantamax ? (
+                                <div className="flex items-center gap-2">
+                                  <img src={`${CLOUDFRONT_ASSETS_URL}/gmax.png`} alt="G-Max" className="w-6 h-6 object-contain" onError={(e) => (e.currentTarget.style.display = "none")} />
+                                  <span className="text-xs font-bold tracking-[0.2em] uppercase leading-none text-gmax">GIGANTAMAX</span>
+                                </div>
+                              ) : (
+                                <>
+                                  <div className={`w-2 h-2 rounded-full bg-ink/10`} />
+                                  <span className={`text-xs font-bold tracking-[0.2em] uppercase leading-none opacity-90`}>{form["special form"]}</span>
+                                </>
+                              )}
                             </div>
                           )}
                           <div className="flex flex-wrap gap-2">
-                             {form.type.map((t) => (
-                              <span key={t} className="flex items-center gap-2 font-mono text-[10px] font-black uppercase tracking-wider px-2.5 py-1.5 bg-transparent micro-label border border-line">
+                             {form.type.map((t, idx) => (
+                              <span key={`type-d-${t}-${idx}`} className={`flex items-center gap-2 font-mono text-[10px] font-black uppercase tracking-wider px-2.5 py-1.5 bg-transparent micro-label border border-line text-ink`}>
                                 <img src={`${CLOUDFRONT_ASSETS_URL}/type-icons/${t.toLowerCase()}-type-icon.png`} alt={t} className="w-4 h-4 object-contain" />
                                 <span>{t}</span>
                               </span>
@@ -481,21 +531,21 @@ export default function PokemonModal({ initialId, initialFormIndex = 0, onClose,
                         </div>
                       </header>
                       <section className="mb-12 space-y-4">
-                        <p className="font-display text-xl font-black text-ink uppercase tracking-[0.3em] leading-none">{form.category} Pokémon</p>
+                        <p className={`font-display text-xl font-black uppercase tracking-[0.3em] leading-tight text-ink`}>{form.category} Pokémon</p>
                         <div className="space-y-4">
                           <span className="micro-label opacity-30 block">D3x Entry</span>
-                          <p className="text-sm font-medium leading-relaxed italic border-l-[3px] border-line pl-6 py-1">"{form.entry}"</p>
+                          <p className={`text-sm font-medium leading-relaxed italic border-l-[3px] pl-6 py-1 border-line`}>"{form.entry}"</p>
                         </div>
                       </section>
                       <div className="space-y-12">
-                        <section className="grid grid-cols-2 gap-10 border-b border-line pb-12">
+                        <section className={`grid grid-cols-2 gap-10 border-b pb-12 border-line`}>
                            <div className="space-y-2">
                             <span className="micro-label opacity-40">Height</span>
-                            <p className="font-display font-bold text-3xl tracking-tighter">{(form.height / 100).toFixed(1)}{isGigantamax && "+"}<span className="text-xs ml-1 opacity-40">M</span></p>
+                            <p className={`font-display font-bold text-3xl tracking-tighter ${isGigantamax ? 'text-gmax' : ''}`}>{(form.height / 100).toFixed(1)}{(isGigantamax || isMega) && "+"}<span className="text-xs ml-1 opacity-40">M</span></p>
                           </div>
                           <div className="space-y-2">
                             <span className="micro-label opacity-40">Weight</span>
-                            <p className="font-display font-bold text-3xl tracking-tighter">{form.weight === -1 ? "???" : form.weight}{form.weight !== -1 && <span className="text-xs ml-1 opacity-40">KG</span>}</p>
+                            <p className={`font-display font-bold text-3xl tracking-tighter ${isGigantamax ? 'text-gmax' : ''}`}>{form.weight === -1 ? "???" : form.weight}{form.weight !== -1 && <span className="text-xs ml-1 opacity-40">KG</span>}</p>
                           </div>
                         </section>
                         <section className="space-y-6">
@@ -510,7 +560,7 @@ export default function PokemonModal({ initialId, initialFormIndex = 0, onClose,
                           </div>
                         </section>
                         {!isGimmick && !isGimmickOnly && (
-                          <section className="space-y-6 pt-12 border-t border-line">
+                          <section className={`space-y-6 pt-12 border-t border-line`}>
                             <span className="micro-label opacity-40">Evolutionary Line</span>
                             <div className="w-full flex justify-center py-4">
                               <EvolutionChain indexData={indexData} shinyMode={shinyMode} currentId={Number(form.key) || detail["dex number"] + currentFormIndex / 100} onSelect={handleJumpToPokemon} />
@@ -527,7 +577,7 @@ export default function PokemonModal({ initialId, initialFormIndex = 0, onClose,
 
         {/* Archive Navigation PILL - Positioned below the box */}
         {gallery.length > 1 && (
-          <div className="flex items-center bg-paper/90 backdrop-blur-md border border-line rounded-full shadow-xl pointer-events-auto my-2 overflow-hidden">
+          <div className={`flex items-center bg-paper/90 backdrop-blur-md border rounded-full shadow-xl pointer-events-auto my-2 overflow-hidden border-line`}>
             <button 
               disabled={currentIndex === 0}
               onClick={(e) => { e.stopPropagation(); handlePrev(); }}
@@ -539,7 +589,7 @@ export default function PokemonModal({ initialId, initialFormIndex = 0, onClose,
             >
               <ChevronLeft size={14} /> <span className="font-bold tracking-[0.2em] text-[10px]">PREV</span>
             </button>
-            <div className="w-px h-4 bg-line" />
+            <div className={`w-px h-4 bg-line`} />
             <button 
               disabled={currentIndex === gallery.length - 1}
               onClick={(e) => { e.stopPropagation(); handleNext(); }}
