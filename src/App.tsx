@@ -57,6 +57,7 @@ export default function App() {
   const [showGmaxTransition, setShowGmaxTransition] = useState(false);
   const [showMegaTransition, setShowMegaTransition] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const modeChangeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const stickySearchInputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
 
@@ -174,20 +175,28 @@ export default function App() {
   const handleViewModeChange = useCallback((newMode: "national" | "mega" | "gigantamax") => {
     if (newMode === viewMode) return;
 
+    // Clear any pending mode-change timeouts
+    if (modeChangeTimeoutRef.current) {
+      clearTimeout(modeChangeTimeoutRef.current);
+      modeChangeTimeoutRef.current = null;
+    }
+
     // Trigger transitions ONLY when entering a special mode
     if (newMode === "gigantamax") {
       setShowMegaTransition(false);
       setShowGmaxTransition(true);
-      setTimeout(() => {
+      modeChangeTimeoutRef.current = setTimeout(() => {
         setViewMode(newMode);
         setSelectedRegion("All");
+        modeChangeTimeoutRef.current = null;
       }, 600);
     } else if (newMode === "mega") {
       setShowGmaxTransition(false);
       setShowMegaTransition(true);
-      setTimeout(() => {
+      modeChangeTimeoutRef.current = setTimeout(() => {
         setViewMode(newMode);
         setSelectedRegion("All");
+        modeChangeTimeoutRef.current = null;
       }, 600);
     } else {
       // Returning to national: no transition animation, direct state change
@@ -441,7 +450,7 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    if (isAppLoaded) {
+    if (isAppLoaded && (showGmaxTransition || showMegaTransition)) {
       const duration = viewMode === "mega" ? 3000 : 1500;
       const timer = setTimeout(() => {
         setShowGmaxTransition(false);
@@ -449,7 +458,7 @@ export default function App() {
       }, duration);
       return () => clearTimeout(timer);
     }
-  }, [viewMode, isAppLoaded]);
+  }, [viewMode, isAppLoaded, showGmaxTransition, showMegaTransition]);
 
   useEffect(() => {
     if (showGmaxTransition || showMegaTransition) {
@@ -597,10 +606,10 @@ export default function App() {
             className="fixed inset-0 z-[100] flex items-center justify-center bg-[#043B51] pointer-events-auto overflow-hidden"
           >
             {/* Background Repeating Text */}
-            <div className="absolute inset-0 z-0 opacity-[0.05] select-none pointer-events-none overflow-hidden flex flex-col items-center justify-center -rotate-[30deg] scale-150">
-              {[...Array(24)].map((_, i) => (
-                <div key={`mega-bg-loop-${i}`} className={`whitespace-nowrap text-white font-black text-2xl md:text-4xl tracking-widest leading-[1.2] ${i % 2 === 0 ? "ml-[-100px]" : "ml-[100px]"}`}>
-                  {Array(12).fill("MEGA EVOLUTION ").join("")}
+            <div className="absolute inset-0 z-0 opacity-[0.05] select-none pointer-events-none flex flex-col items-center justify-center -rotate-[30deg] scale-150">
+              {[...Array(60)].map((_, i) => (
+                <div key={`mega-bg-loop-${i}`} className={`whitespace-nowrap text-white font-black text-2xl md:text-4xl tracking-widest leading-[1.2] ${i % 2 === 0 ? "ml-[-150px]" : "ml-[150px]"}`}>
+                  {Array(60).fill("MEGA EVOLUTION ").join("")}
                 </div>
               ))}
             </div>
