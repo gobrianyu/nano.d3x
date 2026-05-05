@@ -29,6 +29,7 @@ export interface PokemonForm {
   category: string;
   region: string;
   "special form": string | null;
+  gimmick?: "mega" | "gmax" | "emax" | null;
   valid: boolean;
   evolution: Evolution[];
   "base stats": BaseStats[];

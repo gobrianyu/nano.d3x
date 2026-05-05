@@ -162,6 +162,10 @@ export default function App() {
   };
 
   useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [viewMode]);
+
+  useEffect(() => {
     if (selectedPokemonId !== null) {
       document.body.style.overflow = "hidden";
     } else {
@@ -255,10 +259,10 @@ export default function App() {
         const gimmickForms = detail["gimmick forms"] || [];
         
         gimmickForms.forEach((gf, gIndex) => {
-          const specialForm = gf["special form"] || "";
-          const isGigantamaxOrEternamax = specialForm.startsWith("Gigantamax") || specialForm.startsWith("Eternamax");
+          const isGigantamaxOrEternamax = gf.gimmick === "gmax" || gf.gimmick === "emax";
+          const isMega = gf.gimmick === "mega";
           
-          if (viewMode === "mega" && isGigantamaxOrEternamax) return;
+          if (viewMode === "mega" && !isMega) return;
           if (viewMode === "gigantamax" && !isGigantamaxOrEternamax) return;
           
           // Basic search filter
@@ -380,7 +384,7 @@ export default function App() {
     targetIds.forEach(id => {
       const detail = queryClient.getQueryData<PokemonDetail>(["pokemonDetail", id]);
       if (detail && detail["gimmick forms"]) {
-        const matches = detail["gimmick forms"].filter(gf => gf["special form"]?.startsWith("Mega"));
+        const matches = detail["gimmick forms"].filter(gf => gf.gimmick === "mega");
         count += Math.max(1, matches.length); 
       } else {
         count += 1;
@@ -431,10 +435,9 @@ export default function App() {
           const gimmickIndex = formIndex - formsCount;
           const gf = gimmickForms[gimmickIndex];
           if (gf) {
-            const specialForm = gf["special form"] || "";
-            if (viewMode === "mega" && specialForm.startsWith("Mega")) {
+            if (viewMode === "mega" && gf.gimmick === "mega") {
               count++;
-            } else if (viewMode === "gigantamax" && (specialForm.startsWith("Gigantamax") || specialForm.startsWith("Eternamax"))) {
+            } else if (viewMode === "gigantamax" && (gf.gimmick === "gmax" || gf.gimmick === "emax")) {
               count++;
             }
           }

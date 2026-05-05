@@ -105,9 +105,8 @@ export default function PokemonModal({ initialId, initialFormIndex = 0, onClose,
   const form = allForms[currentFormIndex];
   const isGimmick = currentFormIndex >= regularFormsCount;
 
-  const specialFormName = form?.["special form"] || "";
-  const isGigantamax = specialFormName.startsWith("Gigantamax") || specialFormName.startsWith("Eternamax");
-  const isMega = specialFormName.startsWith("Mega") && viewMode === "mega";
+  const isGigantamax = form?.gimmick === "gmax" || form?.gimmick === "emax";
+  const isMega = form?.gimmick === "mega";
 
   const imageKey = `image asset ${gender}${shinyMode ? " shiny" : ""}` as keyof PokemonForm;
   const imageUrl = form ? `${BASE_IMAGE_URL}/${form[imageKey] || "unknown.png"}` : "";
@@ -299,14 +298,23 @@ export default function PokemonModal({ initialId, initialFormIndex = 0, onClose,
                           } as any)}
                         />
                       </div>
-                      {form["special form"] && (
+                      {(form.gimmick || form["special form"]) && (
                         <div className="flex items-center gap-3 pt-4">
-                          {isGigantamax ? (
+                          {(form.gimmick === "gmax" || form.gimmick === "emax") && (
                             <div className="flex items-center gap-2">
                               <img src={`${CLOUDFRONT_ASSETS_URL}/gmax.png`} alt="G-Max" className="w-5 h-5 object-contain" onError={(e) => (e.currentTarget.style.display = "none")} />
-                              <span className="text-[11px] font-bold tracking-[0.2em] uppercase leading-none text-gmax">GIGANTAMAX</span>
+                              <span className="text-[11px] font-bold tracking-[0.2em] uppercase leading-none text-gmax">
+                                {form.gimmick === "emax" ? "ETERNAMAX" : "GIGANTAMAX"}
+                              </span>
                             </div>
-                          ) : (
+                          )}
+                          {form.gimmick === "mega" && (
+                            <div className="flex items-center gap-2">
+                              <div className="w-1.5 h-1.5 rounded-full bg-mega" />
+                              <span className="text-[11px] font-bold tracking-[0.2em] uppercase leading-none text-mega">MEGA EVOLUTION</span>
+                            </div>
+                          )}
+                          {form["special form"] && (
                             <>
                               <div className={`w-1.5 h-1.5 rounded-full bg-ink/20`} />
                               <span className={`text-[11px] font-bold tracking-[0.2em] uppercase leading-none opacity-80`}>{form["special form"]}</span>
@@ -356,8 +364,7 @@ export default function PokemonModal({ initialId, initialFormIndex = 0, onClose,
                               {allForms.map((f, i) => {
                                 const isHovered = hoveredFormIndex === i;
                                 const isActive = i === currentFormIndex;
-                                const fName = f?.["special form"] || "";
-                                const fIsGmax = fName.startsWith("Gigantamax") || fName.startsWith("Eternamax");
+                                const fIsGmax = f?.gimmick === "gmax" || f?.gimmick === "emax";
                                 return (
                                   <div key={`form-p-${i}`} className="relative flex items-center justify-end group/form cursor-pointer select-none" onMouseEnter={() => setHoveredFormIndex(i)} onClick={() => handleFormSelect(i)}>
                                     <AnimatePresence>
@@ -478,8 +485,7 @@ export default function PokemonModal({ initialId, initialFormIndex = 0, onClose,
                         <div className="absolute top-1/2 -translate-y-1/2 right-0 flex flex-col items-end z-40 group/selector pointer-events-none" onMouseLeave={() => setHoveredFormIndex(null)}>
                           <div className="flex flex-col gap-0.5 items-end max-h-[80vh] min-w-[500px] overflow-y-auto no-scrollbar py-20 pr-6 pl-[300px] scroll-smooth pointer-events-auto">
                             {allForms.map((f, i) => {
-                              const fName = f?.["special form"] || f?.name || "";
-                              const fIsGmax = fName.startsWith("Gigantamax") || fName.startsWith("Eternamax");
+                              const fIsGmax = f?.gimmick === "gmax" || f?.gimmick === "emax";
                               return (
                                 <div key={`form-d-${i}`} className="relative flex items-center justify-end group/form cursor-pointer select-none" onMouseEnter={() => setHoveredFormIndex(i)} onClick={() => handleFormSelect(i)}>
                                   <AnimatePresence>{hoveredFormIndex === i && <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 10 }} className={`absolute right-full mr-8 px-3 py-2 whitespace-nowrap shadow-2xl z-50 italic border text-[10px] font-mono font-bold uppercase tracking-[0.2em] bg-ink text-paper border-paper/10`}>{f?.["special form"] || f?.name || "???"}</motion.div>}</AnimatePresence>
@@ -505,14 +511,23 @@ export default function PokemonModal({ initialId, initialFormIndex = 0, onClose,
                             className: `font-display font-black tracking-tighter leading-[1.2] px-1 pb-4 whitespace-nowrap ${isGigantamax ? 'bg-gradient-to-b from-white to-[#d0006f] bg-clip-text text-transparent drop-shadow-[0_4px_8px_rgba(208,0,111,0.3)]' : 'text-ink'}`, 
                             children: form.name 
                           } as any)} />
-                          {form["special form"] && (
+                          {(form.gimmick || form["special form"]) && (
                             <div className="flex items-center gap-3 mb-2">
-                              {isGigantamax ? (
+                              {(form.gimmick === "gmax" || form.gimmick === "emax") && (
                                 <div className="flex items-center gap-2">
                                   <img src={`${CLOUDFRONT_ASSETS_URL}/gmax.png`} alt="G-Max" className="w-6 h-6 object-contain" onError={(e) => (e.currentTarget.style.display = "none")} />
-                                  <span className="text-xs font-bold tracking-[0.2em] uppercase leading-none text-gmax">GIGANTAMAX</span>
+                                  <span className="text-xs font-bold tracking-[0.2em] uppercase leading-none text-gmax">
+                                    {form.gimmick === "emax" ? "ETERNAMAX" : "GIGANTAMAX"}
+                                  </span>
                                 </div>
-                              ) : (
+                              )}
+                              {form.gimmick === "mega" && (
+                                <div className="flex items-center gap-2">
+                                  <div className="w-2 h-2 rounded-full bg-mega" />
+                                  <span className="text-xs font-bold tracking-[0.2em] uppercase leading-none text-mega">MEGA EVOLUTION</span>
+                                </div>
+                              )}
+                              {form["special form"] && (
                                 <>
                                   <div className={`w-2 h-2 rounded-full bg-ink/10`} />
                                   <span className={`text-xs font-bold tracking-[0.2em] uppercase leading-none opacity-90`}>{form["special form"]}</span>
