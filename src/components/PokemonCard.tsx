@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { PokemonDetail, PokemonForm, PokemonIndexItem } from "../types";
 import { BASE_DATA_URL, BASE_IMAGE_URL } from "../constants";
 import { motion } from "motion/react";
-import { ImageOff } from "lucide-react";
+import { HelpCircle } from "lucide-react";
 import { useImage } from "../lib/useImage";
 import { useInView } from "react-intersection-observer";
 import { useQuery } from "@tanstack/react-query";
@@ -91,7 +91,7 @@ export default function PokemonCard({
         ${isGmaxMode ? '!text-gmax/40 group-hover:!text-gmax group-hover:opacity-100 font-bold' : 
           isMegaMode ? '!text-mega/40 group-hover:!text-mega group-hover:opacity-100 font-bold' : 
           'opacity-40 group-hover:opacity-100'}`}>
-        {displayTitle}
+        {pokemonName}
       </div>
 
       {/* Dex ID - Top Right */}
@@ -127,7 +127,7 @@ export default function PokemonCard({
           </>
         ) : (
           <div className="flex flex-col items-center justify-center opacity-40 group-hover:opacity-80 transition-opacity">
-            <span className="font-display text-sm font-black italic break-words text-center px-2">{pokemonName}</span>
+            <HelpCircle size={40} strokeWidth={1} className="opacity-20" />
             <span className="text-[7px] micro-label tracking-tighter mt-1 opacity-40">Archive Incomplete</span>
           </div>
         )}

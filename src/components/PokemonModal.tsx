@@ -308,12 +308,6 @@ export default function PokemonModal({ initialId, initialFormIndex = 0, onClose,
                               </span>
                             </div>
                           )}
-                          {form.gimmick === "mega" && (
-                            <div className="flex items-center gap-2">
-                              <div className="w-1.5 h-1.5 rounded-full bg-mega" />
-                              <span className="text-[11px] font-bold tracking-[0.2em] uppercase leading-none text-mega">MEGA EVOLUTION</span>
-                            </div>
-                          )}
                           {form["special form"] && (
                             <>
                               <div className={`w-1.5 h-1.5 rounded-full bg-ink/20`} />
