@@ -283,37 +283,36 @@ export default function PokemonModal({ initialId, initialFormIndex = 0, onClose,
                 {isPortrait ? (
                   <div className="flex flex-col w-full h-auto">
                     {/* Header */}
-                    <div className="px-8 py-6 space-y-4 shrink-0">
-                      <span className={`font-display text-xl font-black tracking-tighter ${isGigantamax ? 'text-gmax' : isMega ? 'text-mega' : ''}`}>
+                    <div className="px-8 py-6 space-y-1 shrink-0">
+                      <span className={`font-display text-xl font-black tracking-tighter mb-2 block ${isGigantamax ? 'text-gmax' : isMega ? 'text-mega' : ''}`}>
                         #{String(detail["dex number"]).padStart(4, "0")}
                       </span>
+                      
+                      {(form.gimmick === "gmax" || form.gimmick === "emax") && (
+                        <div className="flex items-center gap-2 mb-1">
+                          <img src={`${CLOUDFRONT_ASSETS_URL}/gmax.png`} alt="G-Max" className="w-5 h-5 object-contain" onError={(e) => (e.currentTarget.style.display = "none")} />
+                          <span className="text-[11px] font-bold tracking-[0.2em] uppercase leading-none text-gmax">
+                            {form.gimmick === "emax" ? "ETERNAMAX" : "GIGANTAMAX"}
+                          </span>
+                        </div>
+                      )}
+
                       <div className="flex items-baseline gap-2 overflow-visible min-w-0 w-full">
                         <Textfit 
                           {...({
                             mode: "single",
                             max: 40, 
                             min: 16,
-                            className: `font-display font-black tracking-tighter leading-[1.2] px-1 pb-1 whitespace-nowrap w-full ${isGigantamax ? 'bg-gradient-to-b from-white from-0% via-white via-35% via-[#d0006f] via-55% to-[#d0006f] to-100% bg-clip-text text-transparent drop-shadow-[0_2px_4px_rgba(208,0,111,0.3)]' : 'text-ink'}`,
+                            className: `font-display font-black tracking-tighter leading-[1.1] px-1 whitespace-nowrap w-full ${isGigantamax ? 'bg-gradient-to-b from-white from-0% via-white via-35% via-[#d0006f] via-55% to-[#d0006f] to-100% bg-clip-text text-transparent drop-shadow-[0_2px_4px_rgba(208,0,111,0.3)]' : 'text-ink'}`,
                             children: form.name
                           } as any)}
                         />
                       </div>
-                      {(form.gimmick || form["special form"]) && (
-                        <div className="flex items-center gap-3 pt-4">
-                          {(form.gimmick === "gmax" || form.gimmick === "emax") && (
-                            <div className="flex items-center gap-2">
-                              <img src={`${CLOUDFRONT_ASSETS_URL}/gmax.png`} alt="G-Max" className="w-5 h-5 object-contain" onError={(e) => (e.currentTarget.style.display = "none")} />
-                              <span className="text-[11px] font-bold tracking-[0.2em] uppercase leading-none text-gmax">
-                                {form.gimmick === "emax" ? "ETERNAMAX" : "GIGANTAMAX"}
-                              </span>
-                            </div>
-                          )}
-                          {form["special form"] && (
-                            <>
-                              <div className={`w-1.5 h-1.5 rounded-full bg-ink/20`} />
-                              <span className={`text-[11px] font-bold tracking-[0.2em] uppercase leading-none opacity-80`}>{form["special form"]}</span>
-                            </>
-                          )}
+
+                      {form["special form"] && (
+                        <div className="flex items-center gap-2 mt-0.5">
+                          <div className={`w-1.5 h-1.5 rounded-full bg-ink/20`} />
+                          <span className={`text-[11px] font-bold tracking-[0.2em] uppercase leading-none opacity-80`}>{form["special form"]}</span>
                         </div>
                       )}
                     </div>
@@ -497,39 +496,29 @@ export default function PokemonModal({ initialId, initialFormIndex = 0, onClose,
                     {/* Details Panel - Desktop */}
                     <div className="flex flex-col relative box-border md:w-5/12 px-8 py-12 lg:px-10 overflow-y-auto custom-scrollbar">
                       <header className="mb-12">
-                        <div className="flex flex-col gap-4">
+                        <div className="flex flex-col gap-1">
+                          {(form.gimmick === "gmax" || form.gimmick === "emax") && (
+                            <div className="flex items-center gap-2 mb-1">
+                              <img src={`${CLOUDFRONT_ASSETS_URL}/gmax.png`} alt="G-Max" className="w-6 h-6 object-contain" onError={(e) => (e.currentTarget.style.display = "none")} />
+                              <span className="text-xs font-bold tracking-[0.2em] uppercase leading-none text-gmax">
+                                {form.gimmick === "emax" ? "ETERNAMAX" : "GIGANTAMAX"}
+                              </span>
+                            </div>
+                          )}
                           <Textfit {...({ 
                             mode: "single", 
                             max: 80, 
                             min: 20, 
-                            className: `font-display font-black tracking-tighter leading-[1.2] px-1 pb-4 whitespace-nowrap ${isGigantamax ? 'bg-gradient-to-b from-white to-[#d0006f] bg-clip-text text-transparent drop-shadow-[0_4px_8px_rgba(208,0,111,0.3)]' : 'text-ink'}`, 
+                            className: `font-display font-black tracking-tighter leading-[1.1] px-1 whitespace-nowrap ${isGigantamax ? 'bg-gradient-to-b from-white to-[#d0006f] bg-clip-text text-transparent drop-shadow-[0_4px_8px_rgba(208,0,111,0.3)]' : 'text-ink'}`, 
                             children: form.name 
                           } as any)} />
-                          {(form.gimmick || form["special form"]) && (
-                            <div className="flex items-center gap-3 mb-2">
-                              {(form.gimmick === "gmax" || form.gimmick === "emax") && (
-                                <div className="flex items-center gap-2">
-                                  <img src={`${CLOUDFRONT_ASSETS_URL}/gmax.png`} alt="G-Max" className="w-6 h-6 object-contain" onError={(e) => (e.currentTarget.style.display = "none")} />
-                                  <span className="text-xs font-bold tracking-[0.2em] uppercase leading-none text-gmax">
-                                    {form.gimmick === "emax" ? "ETERNAMAX" : "GIGANTAMAX"}
-                                  </span>
-                                </div>
-                              )}
-                              {form.gimmick === "mega" && (
-                                <div className="flex items-center gap-2">
-                                  <div className="w-2 h-2 rounded-full bg-mega" />
-                                  <span className="text-xs font-bold tracking-[0.2em] uppercase leading-none text-mega">MEGA EVOLUTION</span>
-                                </div>
-                              )}
-                              {form["special form"] && (
-                                <>
-                                  <div className={`w-2 h-2 rounded-full bg-ink/10`} />
-                                  <span className={`text-xs font-bold tracking-[0.2em] uppercase leading-none opacity-90`}>{form["special form"]}</span>
-                                </>
-                              )}
+                          {form["special form"] && (
+                            <div className="flex items-center gap-2 mt-1">
+                              <div className={`w-2 h-2 rounded-full bg-ink/10`} />
+                              <span className={`text-xs font-bold tracking-[0.2em] uppercase leading-none opacity-90`}>{form["special form"]}</span>
                             </div>
                           )}
-                          <div className="flex flex-wrap gap-2">
+                          <div className="flex flex-wrap gap-2 mt-3">
                              {form.type.map((t, idx) => (
                               <span key={`type-d-${t}-${idx}`} className={`flex items-center gap-2 font-mono text-[10px] font-black uppercase tracking-wider px-2.5 py-1.5 bg-transparent micro-label border border-line text-ink`}>
                                 <img src={`${CLOUDFRONT_ASSETS_URL}/type-icons/${t.toLowerCase()}-type-icon.png`} alt={t} className="w-4 h-4 object-contain" />
