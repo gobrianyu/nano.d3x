@@ -258,19 +258,50 @@ export default function App() {
     }).filter((p): p is PokemonIndexItem => p !== null);
   }, [indexData, idToIndexMap]);
 
-  // Advanced filtering using cached detail data where available
-  const filteredIndex = useMemo(() => {
+  // Advanced filtering and dynamic counters using cached detail data where available
+  const { filteredIndex, stats } = useMemo(() => {
+    let speciesNum = 0;
+    let speciesDen = 0;
+    let formsNum = 0;
+    let formsDen = 0;
+
     if (viewMode === "mega" || viewMode === "gigantamax") {
       const gimmickItems: any[] = [];
       const modeIndexData = viewMode === "mega" ? megaIndexData : gmaxIndexData;
 
       modeIndexData.forEach(p => {
+        // Region filter first (fast)
+        const regionInfo = REGIONS.find(r => p.id >= r.startId && p.id <= r.endId);
+        const matchesRegion = selectedRegion === "All" || regionInfo?.name === selectedRegion;
+        if (!matchesRegion) return;
+
         const detail = queryClient.getQueryData<PokemonDetail>(["pokemonDetail", p.id]);
-        if (!detail || !detail["gimmick forms"]) return;
+        
+        // If we don't have detail yet, we can check name and region
+        const fallbackName = p.thumbnail.split("-").length > 1 
+          ? p.thumbnail.split("-")[1]?.split(".")[0]?.toLowerCase() 
+          : p.thumbnail.split(".")[0]?.toLowerCase() || "";
+        
+        const matchesSearchFallback = searchQuery === "" || 
+                                     fallbackName.includes(searchQuery.toLowerCase()) || 
+                                     p.id.toString().includes(searchQuery);
+
+        if (!detail) {
+          // If no detail, we only count as species denominator if search matches
+          // But we don't know the type, so if type filter active, we skip
+          if (selectedType === "All" && matchesSearchFallback) {
+            speciesDen++;
+            formsDen++; // Assume at least 1 form
+          }
+          return;
+        }
 
         const forms = detail.forms || [];
         const gimmickForms = detail["gimmick forms"] || [];
         
+        let speciesMatchesOverall = false;
+        let speciesRegisteredOverall = false;
+
         gimmickForms.forEach((gf, gIndex) => {
           const isGigantamaxOrEternamax = gf.gimmick === "gmax" || gf.gimmick === "emax";
           const isMega = gf.gimmick === "mega";
@@ -278,46 +309,59 @@ export default function App() {
           if (viewMode === "mega" && !isMega) return;
           if (viewMode === "gigantamax" && !isGigantamaxOrEternamax) return;
           
-          // Basic search filter
+          // Filter check
           const matchesSearch = searchQuery === "" || 
-                              gf.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                              gf["special form"]?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                              p.id.toString().includes(searchQuery);
+                               gf.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                               gf["special form"]?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                               p.id.toString().includes(searchQuery);
           
-          if (!matchesSearch) return;
-
-          // Type filter
           const matchesType = selectedType === "All" || gf.type.includes(selectedType);
-          if (!matchesType) return;
 
-          // Region filter
-          const regionInfo = REGIONS.find(r => p.id >= r.startId && p.id <= r.endId);
-          const matchesRegion = selectedRegion === "All" || regionInfo?.name === selectedRegion;
-          if (!matchesRegion) return;
+          if (matchesSearch && matchesType) {
+            formsDen++;
+            speciesMatchesOverall = true;
+            
+            const formIdx = forms.length + gIndex;
+            const isRegistered = (loadedImages[p.id]?.has(formIdx)) || false;
+            
+            if (isRegistered) {
+              formsNum++;
+              speciesRegisteredOverall = true;
+            }
 
-          gimmickItems.push({
-            ...p,
-            matchedFormIndex: forms.length + gIndex,
-            visible: true,
-            regionName: regionInfo?.name || "Unknown"
-          });
+            gimmickItems.push({
+              ...p,
+              matchedFormIndex: formIdx,
+              visible: true,
+              regionName: regionInfo?.name || "Unknown"
+            });
+          }
         });
+
+        if (speciesMatchesOverall) {
+          speciesDen++;
+          if (speciesRegisteredOverall) speciesNum++;
+        }
       });
-      return gimmickItems;
+      
+      return { filteredIndex: gimmickItems, stats: { speciesNum, speciesDen, formsNum, formsDen } };
     }
 
-    return indexData.map((p) => {
-      // Name search from thumbnail fallback
+    // National Mode logic
+    const results = indexData.map((p) => {
+      const regionInfo = REGIONS.find(r => p.id >= r.startId && p.id <= r.endId);
+      const matchesRegion = selectedRegion === "All" || regionInfo?.name === selectedRegion;
+
       const fallbackName = p.thumbnail.split("-").length > 1 
         ? p.thumbnail.split("-")[1]?.split(".")[0]?.toLowerCase() 
         : p.thumbnail.split(".")[0]?.toLowerCase() || "";
       
-      // Get cached detail for refined search and type filtering
       const detail = queryClient.getQueryData<PokemonDetail>(["pokemonDetail", p.id]);
       
       let matchedFormIndex = 0;
       let matchesType = selectedType === "All";
       let officialName = fallbackName;
+      let isRegistered = !!detail;
 
       if (detail) {
         const allForms = [
@@ -325,16 +369,36 @@ export default function App() {
           ...(detail["gimmick forms"] || [])
         ].filter(f => f && typeof f === 'object');
         
-        // Find the first form matching the type
+        // Denominator logic: how many forms match filters
+        allForms.forEach((f, fIdx) => {
+          const mSearch = searchQuery === "" || f.name.toLowerCase().includes(searchQuery.toLowerCase()) || p.id.toString().includes(searchQuery);
+          const mType = selectedType === "All" || f.type.includes(selectedType);
+          
+          if (mSearch && matchesRegion && mType) {
+            formsDen++;
+            if (loadedImages[p.id]?.has(fIdx)) {
+              formsNum++;
+            }
+          }
+        });
+
+        // Search and Type match for species
         if (selectedType !== "All") {
           const firstMatchingIndex = allForms.findIndex(f => f.type.some(t => t === selectedType));
           if (firstMatchingIndex !== -1) {
             matchedFormIndex = firstMatchingIndex;
             matchesType = true;
+          } else {
+            matchesType = false;
           }
         }
 
         officialName = allForms[matchedFormIndex]?.name.toLowerCase() || fallbackName;
+      } else {
+        // No detail logic
+        if (selectedType === "All") {
+          formsDen++; // Assume base form
+        }
       }
 
       const matchesSearch = 
@@ -343,10 +407,15 @@ export default function App() {
         p.id.toString().includes(searchQuery) ||
         fallbackName.includes(searchQuery.toLowerCase());
       
-      const regionInfo = REGIONS.find(r => p.id >= r.startId && p.id <= r.endId);
-      const matchesRegion = selectedRegion === "All" || regionInfo?.name === selectedRegion;
-
       const visible = matchesSearch && matchesRegion && matchesType;
+
+      if (visible) {
+        speciesDen++;
+        // Precision check: matches what the user actually sees in the card
+        if (isRegistered && loadedImages[p.id]?.has(matchedFormIndex)) {
+          speciesNum++;
+        }
+      }
 
       return {
         ...p,
@@ -355,7 +424,9 @@ export default function App() {
         regionName: regionInfo?.name || "Unknown"
       };
     }).filter(p => p.visible);
-  }, [indexData, megaIndexData, gmaxIndexData, searchQuery, selectedRegion, selectedType, queryClient, lastDetailFetchTime, viewMode]);
+
+    return { filteredIndex: results, stats: { speciesNum, speciesDen, formsNum, formsDen } };
+  }, [indexData, megaIndexData, gmaxIndexData, searchQuery, selectedRegion, selectedType, queryClient, lastDetailFetchTime, viewMode, loadedImages]);
 
   const sections = useMemo(() => {
     const isFiltering = searchQuery !== "" || selectedType !== "All" || selectedRegion !== "All" || viewMode !== "national";
@@ -373,99 +444,10 @@ export default function App() {
     }).filter((s): s is NonNullable<typeof s> => s !== null);
   }, [filteredIndex, searchQuery, selectedType]);
 
-  const targetTotal = useMemo(() => {
-    if (viewMode === "gigantamax") return GIGANTAMAX_POKEMON_IDS.length;
-    if (viewMode === "mega") return MEGA_POKEMON_IDS.length;
-    return indexData.length; 
-  }, [viewMode, indexData.length]);
-
-  const totalFormsCount = useMemo(() => {
-    if (viewMode === "gigantamax") return GIGANTAMAX_POKEMON_IDS.length;
-    
-    if (viewMode === "national") {
-      let count = 0;
-      indexData.forEach(p => {
-        const detail = queryClient.getQueryData<PokemonDetail>(["pokemonDetail", p.id]);
-        if (detail) {
-          const formsCount = (detail.forms || []).length;
-          const gimmicksCount = (detail["gimmick forms"] || []).length;
-          count += formsCount + gimmicksCount;
-        } else {
-          count += 1;
-        }
-      });
-      return count;
-    }
-    
-    // For Mega mode
-    const targetIds = MEGA_POKEMON_IDS;
-    let count = 0;
-    targetIds.forEach(id => {
-      const detail = queryClient.getQueryData<PokemonDetail>(["pokemonDetail", id]);
-      if (detail && detail["gimmick forms"]) {
-        const matches = detail["gimmick forms"].filter(gf => gf.gimmick === "mega");
-        count += Math.max(1, matches.length); 
-      } else {
-        count += 1;
-      }
-    });
-    return count;
-  }, [viewMode, indexData, queryClient, lastDetailFetchTime]);
-
-  const registeredCount = useMemo(() => {
-    if (viewMode === "national") {
-      // Species registered = number of grids we successfully display artwork for (index 0)
-      let count = 0;
-      indexData.forEach(p => {
-        if (loadedImages[p.id]?.has(0)) count++;
-      });
-      return count;
-    }
-    const targetSet = new Set(viewMode === "mega" ? MEGA_POKEMON_IDS : GIGANTAMAX_POKEMON_IDS);
-    return indexData.filter(p => targetSet.has(p.id) && (loadedImages[p.id]?.size || 0) > 0).length;
-  }, [indexData, viewMode, loadedImages]);
-
-  const totalFormsRegistered = useMemo(() => {
-    // Numerator for forms: total number of successful form loads across all species
-    let count = 0;
-    
-    if (viewMode === "national") {
-      Object.values(loadedImages).forEach((formSet: Set<number>) => {
-        count += formSet.size;
-      });
-      return count;
-    }
-
-    // For Mega/Gmax, we filter the loaded images based on whether they are the correct gimmick form
-    const targetIds = viewMode === "mega" ? MEGA_POKEMON_IDS : GIGANTAMAX_POKEMON_IDS;
-    targetIds.forEach(id => {
-      const formSet = loadedImages[id];
-      if (!formSet) return;
-
-      const detail = queryClient.getQueryData<PokemonDetail>(["pokemonDetail", id]);
-      if (!detail) return;
-
-      const formsCount = (detail.forms || []).length;
-      const gimmickForms = detail["gimmick forms"] || [];
-
-      formSet.forEach(formIndex => {
-        // Only count if it's a gimmick form at the expected index
-        if (formIndex >= formsCount) {
-          const gimmickIndex = formIndex - formsCount;
-          const gf = gimmickForms[gimmickIndex];
-          if (gf) {
-            if (viewMode === "mega" && gf.gimmick === "mega") {
-              count++;
-            } else if (viewMode === "gigantamax" && (gf.gimmick === "gmax" || gf.gimmick === "emax")) {
-              count++;
-            }
-          }
-        }
-      });
-    });
-
-    return count;
-  }, [loadedImages, viewMode, queryClient, lastDetailFetchTime]);
+  const targetTotal = stats.speciesDen;
+  const totalFormsCount = stats.formsDen;
+  const registeredCount = stats.speciesNum;
+  const totalFormsRegistered = stats.formsNum;
 
   const handleLoadingComplete = useCallback(() => {
     setIsAppLoaded(true);
@@ -693,21 +675,6 @@ export default function App() {
               </div>
             </div>
 
-            <div className="flex flex-col items-start md:items-end gap-6">
-              {/* Analytics / Counters */}
-              <div className="flex gap-12">
-                {viewMode === 'national' && (
-                  <div className="flex flex-col gap-1">
-                    <span className="micro-label opacity-60">SPECIES REGISTERED</span>
-                    <span className={`text-2xl font-display font-black tracking-tight`}>{registeredCount}<span className="text-sm opacity-40 ml-1">/ {targetTotal}</span></span>
-                  </div>
-                )}
-                <div className="flex flex-col gap-1">
-                  <span className="micro-label opacity-60 uppercase">FORMS REGISTERED</span>
-                  <span className={`text-2xl font-display font-black tracking-tight ${viewMode === 'gigantamax' ? 'text-gmax gmax-pulse' : viewMode === 'mega' ? 'text-mega' : ''}`}>{totalFormsRegistered}<span className="text-sm opacity-40 ml-1">/ {totalFormsCount}</span></span>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
 
@@ -768,7 +735,7 @@ export default function App() {
       </header>
 
       {/* Navigation & Search - Minimal Rail */}
-      <div className="flex flex-col gap-16" ref={filterSectionRef}>
+      <div className="flex flex-col" ref={filterSectionRef}>
         <div className="flex flex-col gap-0 border-b border-line">
           <div className="flex flex-col lg:flex-row gap-12 items-start lg:items-end justify-between pb-4">
             <div className="flex flex-col md:flex-row gap-12 flex-1 w-full items-center md:items-center justify-between">
@@ -896,6 +863,26 @@ export default function App() {
               </motion.div>
             )}
           </AnimatePresence>
+        </div>
+
+        {/* Analytics / Counters - Moved to divider margin */}
+        <div className="flex items-center py-4 px-2 gap-10">
+          {viewMode === 'national' && (
+            <div className="flex items-baseline gap-2">
+              <span className="micro-label opacity-40 font-bold tracking-[0.2em] text-[9px] uppercase">SPECIES</span>
+              <span className={`text-xl font-display font-black tracking-tighter`}>
+                {registeredCount}
+                <span className="text-[10px] opacity-20 ml-1.5 font-mono">/ {targetTotal}</span>
+              </span>
+            </div>
+          )}
+          <div className="flex items-baseline gap-2">
+            <span className="micro-label opacity-40 font-bold tracking-[0.2em] text-[9px] uppercase">FORMS</span>
+            <span className={`text-xl font-display font-black tracking-tighter ${viewMode === 'gigantamax' ? 'text-gmax' : viewMode === 'mega' ? 'text-mega' : ''}`}>
+              {totalFormsRegistered}
+              <span className="text-[10px] opacity-20 ml-1.5 font-mono">/ {totalFormsCount}</span>
+            </span>
+          </div>
         </div>
 
         {/* The Exhibition Grid */}
