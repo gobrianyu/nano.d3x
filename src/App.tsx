@@ -92,9 +92,6 @@ export default function App() {
               staleTime: Infinity
             });
 
-            // Update UI state for counts
-            setLastDetailFetchTime(Date.now());
-
             // 2. Fetch all forms' images
             const forms = detail.forms || [];
             const gimmicks = detail["gimmick forms"] || [];
@@ -120,8 +117,9 @@ export default function App() {
           }
         }));
 
-        // Advance cursor by batch size
+        // Advance cursor and trigger state update once per batch
         setLoadingCursor(prev => prev + currentBatchSize);
+        setLastDetailFetchTime(Date.now());
       };
 
       loadBatch();
@@ -185,13 +183,18 @@ export default function App() {
       modeChangeTimeoutRef.current = null;
     }
 
+    // Reset filters on mode change for consistency
+    setSelectedRegion("All");
+    setSelectedType("All");
+    setSearchQuery("");
+    setActiveFilter(null);
+
     // Trigger transitions ONLY when entering a special mode
     if (newMode === "gigantamax") {
       setShowMegaTransition(false);
       setShowGmaxTransition(true);
       modeChangeTimeoutRef.current = setTimeout(() => {
         setViewMode(newMode);
-        setSelectedRegion("All");
         modeChangeTimeoutRef.current = null;
       }, 600);
     } else if (newMode === "mega") {
@@ -199,7 +202,6 @@ export default function App() {
       setShowMegaTransition(true);
       modeChangeTimeoutRef.current = setTimeout(() => {
         setViewMode(newMode);
-        setSelectedRegion("All");
         modeChangeTimeoutRef.current = null;
       }, 600);
     } else {
@@ -219,7 +221,6 @@ export default function App() {
     setSearchQuery("");
     setSelectedRegion("All");
     setSelectedType("All");
-    handleViewModeChange("national");
   };
 
   const filterSectionRef = useRef<HTMLDivElement>(null);
@@ -242,17 +243,29 @@ export default function App() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [activeFilter]);
 
+  // Group by regions for section headers (only when not searching/filtering by type/region)
+  const megaIndexData = useMemo(() => {
+    return MEGA_POKEMON_IDS.map(id => {
+      const idx = idToIndexMap.get(id);
+      return idx !== undefined ? indexData[idx] : null;
+    }).filter((p): p is PokemonIndexItem => p !== null);
+  }, [indexData, idToIndexMap]);
+
+  const gmaxIndexData = useMemo(() => {
+    return GIGANTAMAX_POKEMON_IDS.map(id => {
+      const idx = idToIndexMap.get(id);
+      return idx !== undefined ? indexData[idx] : null;
+    }).filter((p): p is PokemonIndexItem => p !== null);
+  }, [indexData, idToIndexMap]);
+
   // Advanced filtering using cached detail data where available
   const filteredIndex = useMemo(() => {
     if (viewMode === "mega" || viewMode === "gigantamax") {
       const gimmickItems: any[] = [];
-      const targetIds = viewMode === "mega" ? MEGA_POKEMON_IDS : GIGANTAMAX_POKEMON_IDS;
+      const modeIndexData = viewMode === "mega" ? megaIndexData : gmaxIndexData;
 
-      targetIds.forEach(id => {
-        const p = indexData.find(item => item.id === id);
-        if (!p) return;
-
-        const detail = queryClient.getQueryData<PokemonDetail>(["pokemonDetail", id]);
+      modeIndexData.forEach(p => {
+        const detail = queryClient.getQueryData<PokemonDetail>(["pokemonDetail", p.id]);
         if (!detail || !detail["gimmick forms"]) return;
 
         const forms = detail.forms || [];
@@ -266,9 +279,10 @@ export default function App() {
           if (viewMode === "gigantamax" && !isGigantamaxOrEternamax) return;
           
           // Basic search filter
-          const matchesSearch = gf.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+          const matchesSearch = searchQuery === "" || 
+                              gf.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
                               gf["special form"]?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                              id.toString().includes(searchQuery);
+                              p.id.toString().includes(searchQuery);
           
           if (!matchesSearch) return;
 
@@ -276,11 +290,16 @@ export default function App() {
           const matchesType = selectedType === "All" || gf.type.includes(selectedType);
           if (!matchesType) return;
 
+          // Region filter
+          const regionInfo = REGIONS.find(r => p.id >= r.startId && p.id <= r.endId);
+          const matchesRegion = selectedRegion === "All" || regionInfo?.name === selectedRegion;
+          if (!matchesRegion) return;
+
           gimmickItems.push({
             ...p,
             matchedFormIndex: forms.length + gIndex,
             visible: true,
-            regionName: REGIONS.find(r => p.id >= r.startId && p.id <= r.endId)?.name || "Unknown"
+            regionName: regionInfo?.name || "Unknown"
           });
         });
       });
@@ -319,6 +338,7 @@ export default function App() {
       }
 
       const matchesSearch = 
+        searchQuery === "" ||
         officialName.includes(searchQuery.toLowerCase()) || 
         p.id.toString().includes(searchQuery) ||
         fallbackName.includes(searchQuery.toLowerCase());
@@ -335,9 +355,8 @@ export default function App() {
         regionName: regionInfo?.name || "Unknown"
       };
     }).filter(p => p.visible);
-  }, [indexData, searchQuery, selectedRegion, selectedType, queryClient, lastDetailFetchTime, viewMode]);
+  }, [indexData, megaIndexData, gmaxIndexData, searchQuery, selectedRegion, selectedType, queryClient, lastDetailFetchTime, viewMode]);
 
-  // Group by regions for section headers (only when not searching/filtering by type/region)
   const sections = useMemo(() => {
     const isFiltering = searchQuery !== "" || selectedType !== "All" || selectedRegion !== "All" || viewMode !== "national";
     if (isFiltering) return null;
@@ -779,16 +798,18 @@ export default function App() {
               </div>
 
               <div className="flex flex-wrap items-center gap-x-12 gap-y-6 w-full md:w-auto">
-                <FilterDropdown
-                  label="Region"
-                  value={selectedRegion}
-                  options={["All", ...REGIONS.map(r => r.name)]}
-                  onChange={setSelectedRegion}
-                  activeFilter={activeFilter}
-                  setActiveFilter={setActiveFilter}
-                  filterId="region"
-                  standalone={true}
-                />
+                {viewMode === "national" && (
+                  <FilterDropdown
+                    label="Region"
+                    value={selectedRegion}
+                    options={["All", ...REGIONS.map(r => r.name)]}
+                    onChange={setSelectedRegion}
+                    activeFilter={activeFilter}
+                    setActiveFilter={setActiveFilter}
+                    filterId="region"
+                    standalone={true}
+                  />
+                )}
 
                 <FilterDropdown
                   label="Type"

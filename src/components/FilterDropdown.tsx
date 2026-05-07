@@ -33,6 +33,8 @@ export default function FilterDropdown<T extends string>({
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    if (standalone) return;
+
     const handleClickOutside = (event: MouseEvent) => {
       if (activeFilter === filterId && dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setActiveFilter(null);
@@ -40,7 +42,7 @@ export default function FilterDropdown<T extends string>({
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [activeFilter, filterId, setActiveFilter]);
+  }, [activeFilter, filterId, setActiveFilter, standalone]);
 
   return (
     <div ref={dropdownRef} className="relative">
