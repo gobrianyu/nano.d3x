@@ -73,58 +73,44 @@ export default function App() {
     return map;
   }, [indexData]);
 
-  // Sequential background loading logic with batching
+  // Sequential background loading logic for JSON data only
   useEffect(() => {
-    const BATCH_SIZE = 100;
+    const BATCH_SIZE = 50;
     
     if (indexData.length > 0 && loadingCursor < indexData.length) {
-      const remaining = indexData.length - loadingCursor;
-      const currentBatchSize = Math.min(BATCH_SIZE, remaining);
-      const batch = indexData.slice(loadingCursor, loadingCursor + currentBatchSize);
+      let cancelled = false;
       
       const loadBatch = async () => {
-        await Promise.all(batch.map(async (p) => {
-          try {
-            // 1. Fetch detail JSON
-            const detail = await queryClient.fetchQuery({
+        const remaining = indexData.length - loadingCursor;
+        const currentBatchSize = Math.min(BATCH_SIZE, remaining);
+        const batch = indexData.slice(loadingCursor, loadingCursor + currentBatchSize);
+        
+        try {
+          await Promise.all(batch.map(async (p) => {
+            await queryClient.fetchQuery({
               queryKey: ["pokemonDetail", p.id],
               queryFn: () => cachedFetch(`${BASE_DATA_URL}/pokemon/${p.id}.json`),
               staleTime: Infinity
             });
+          }));
 
-            // 2. Fetch all forms' images
-            const forms = detail.forms || [];
-            const gimmicks = detail["gimmick forms"] || [];
-            const allForms = [...forms, ...gimmicks];
-
-            // Load images within a species sequentially to avoid burst
-            for (let fIdx = 0; fIdx < allForms.length; fIdx++) {
-              const form = allForms[fIdx];
-              const gender = "m";
-              const imageKey = `image asset ${gender}${shinyMode ? " shiny" : ""}` as keyof PokemonForm;
-              const fallbackImage = shinyMode ? p.thumbnail_shiny : p.thumbnail;
-              const targetImageUrl = form ? `${BASE_IMAGE_URL}/${form[imageKey] || "unknown.png"}` : `${BASE_IMAGE_URL}/${fallbackImage}`;
-              
-              try {
-                await imageCacheManager.load(targetImageUrl);
-                trackImageLoad(p.id, fIdx);
-              } catch (err) {
-                // Skip failed
-              }
-            }
-          } catch (err) {
-            console.error(`Failed to load details for ${p.id}`);
+          if (!cancelled) {
+            setLoadingCursor(prev => prev + currentBatchSize);
+            setLastDetailFetchTime(Date.now());
           }
-        }));
-
-        // Advance cursor and trigger state update once per batch
-        setLoadingCursor(prev => prev + currentBatchSize);
-        setLastDetailFetchTime(Date.now());
+        } catch (err) {
+          console.error(`Error in background load batch starts at ${loadingCursor}:`, err);
+          // Try to recover by moving forward anyway if it's just one pokemon failing
+          if (!cancelled) {
+            setLoadingCursor(prev => prev + 1);
+          }
+        }
       };
 
       loadBatch();
+      return () => { cancelled = true; };
     }
-  }, [indexData, loadingCursor, queryClient, shinyMode, trackImageLoad]);
+  }, [indexData.length, loadingCursor, queryClient]); // Reduced dependencies to prevent thrashing
 
   useEffect(() => {
     localStorage.setItem("shinyMode", JSON.stringify(shinyMode));
@@ -471,6 +457,11 @@ export default function App() {
       document.body.style.overflow = "";
     }
   }, [showGmaxTransition, showMegaTransition]);
+
+  const modalFilteredList = useMemo(() => 
+    filteredIndex.map(p => ({ id: p.id, matchedFormIndex: p.matchedFormIndex || 0 })),
+    [filteredIndex]
+  );
 
   return (
     <div className={`${darkMode ? "dark" : ""} min-h-screen flex flex-col ${viewMode === "gigantamax" ? "selection:bg-gmax/20" : viewMode === "mega" ? "selection:bg-mega/20" : "selection:bg-ink/10"} bg-paper transition-colors relative`}>
@@ -1233,7 +1224,7 @@ export default function App() {
             indexData={indexData}
             shinyMode={shinyMode}
             onImageLoad={trackImageLoad}
-            filteredList={filteredIndex.map(p => ({ id: p.id, matchedFormIndex: p.matchedFormIndex || 0 }))}
+            filteredList={modalFilteredList}
             isGimmickOnly={viewMode !== "national"}
             viewMode={viewMode}
           />
