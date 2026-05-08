@@ -128,7 +128,7 @@ export default function PokemonCard({
         ) : (
           <div className="flex flex-col items-center justify-center opacity-40 group-hover:opacity-80 transition-opacity">
             <HelpCircle size={40} strokeWidth={1} className="opacity-20" />
-            <span className="text-[7px] micro-label tracking-tighter mt-1 opacity-40">Archive Incomplete</span>
+            <span className="text-[7px] micro-label tracking-tighter mt-1 opacity-40">In-Progress</span>
           </div>
         )}
       </div>

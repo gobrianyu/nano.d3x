@@ -636,7 +636,7 @@ export default function App() {
 
       <main className={`flex flex-col p-8 md:p-16 lg:p-24 pb-48 md:pb-64 text-ink transition-opacity duration-1000 ${isAppLoaded ? "opacity-100" : "opacity-0 h-0 overflow-hidden"}`}>
         {/* Header - Reorganized Editorial Style */}
-      <header className="relative mb-32">
+      <header className="relative mb-8">
         <div className="relative">
           {/* Banner Image - Constrained to top section */}
           <div className="absolute inset-0 -mx-8 md:-mx-16 lg:-mx-24 -mt-10 md:-mt-20 lg:-mt-24 pointer-events-none overflow-hidden opacity-60 z-0">
@@ -669,60 +669,74 @@ export default function App() {
           </div>
         </div>
 
-            <div className="flex flex-wrap items-center gap-x-12 gap-y-8 pt-8 border-t border-line">
-            <div className="flex flex-wrap items-center gap-x-12 gap-y-6">
-              {/* Core View Modes */}
-              <div className="flex items-center gap-6">
-                <div className={`flex items-center gap-4 bg-ink/5 p-1 rounded-full border transition-all ${viewMode === 'gigantamax' ? 'border-gmax/30 shadow-[0_0_15px_rgba(208,0,111,0.1)]' : viewMode === 'mega' ? 'border-mega/30 shadow-[0_0_15px_rgba(233,176,247,0.1)]' : 'border-line'}`}>
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-y-8 pt-8 border-t border-line">
+              <div className="flex items-center justify-between w-full md:w-auto md:justify-start md:gap-12">
+                {/* Core View Modes & Toggle */}
+                <div className="flex items-center gap-6">
+                  <div className={`flex items-center gap-4 bg-ink/5 p-1 rounded-full border transition-all ${viewMode === 'gigantamax' ? 'border-gmax/30 shadow-[0_0_15px_rgba(208,0,111,0.1)]' : viewMode === 'mega' ? 'border-mega/30 shadow-[0_0_15px_rgba(233,176,247,0.1)]' : 'border-line'}`}>
+                    <button 
+                      onClick={() => setShinyMode(false)}
+                      className={`px-4 py-1.5 cursor-pointer rounded-full micro-label transition-all ${!shinyMode ? (viewMode === 'gigantamax' ? "bg-gmax !text-white shadow-sm font-bold" : viewMode === 'mega' ? "bg-mega !text-white shadow-sm font-bold" : "bg-paper text-ink shadow-sm") : (viewMode === 'gigantamax' ? "text-gmax/60 hover:text-gmax" : viewMode === 'mega' ? "text-mega/60 hover:text-mega" : "opacity-40 hover:opacity-100")}`}
+                    >
+                      Classic
+                    </button>
+                    <button 
+                      onClick={() => setShinyMode(true)}
+                      className={`px-4 py-1.5 cursor-pointer rounded-full micro-label transition-all ${shinyMode ? (viewMode === 'gigantamax' ? "bg-gmax !text-white shadow-sm font-bold" : viewMode === 'mega' ? "bg-mega !text-white shadow-sm font-bold" : "bg-paper text-ink shadow-sm") : (viewMode === 'gigantamax' ? "text-gmax/60 hover:text-gmax" : viewMode === 'mega' ? "text-mega/60 hover:text-mega" : "opacity-40 hover:opacity-100")}`}
+                    >
+                      Shiny
+                    </button>
+                  </div>
+                </div>
+
+                {/* Theme Toggle - Mobile Only */}
+                <div className="md:hidden">
                   <button 
-                    onClick={() => setShinyMode(false)}
-                    className={`px-4 py-1.5 cursor-pointer rounded-full micro-label transition-all ${!shinyMode ? (viewMode === 'gigantamax' ? "bg-gmax !text-white shadow-sm font-bold" : viewMode === 'mega' ? "bg-mega !text-white shadow-sm font-bold" : "bg-paper text-ink shadow-sm") : (viewMode === 'gigantamax' ? "text-gmax/60 hover:text-gmax" : viewMode === 'mega' ? "text-mega/60 hover:text-mega" : "opacity-40 hover:opacity-100")}`}
+                    onClick={() => setDarkMode(!darkMode)}
+                    className={`flex cursor-pointer items-center transition-all ${viewMode === 'gigantamax' ? 'text-gmax' : viewMode === 'mega' ? 'text-mega' : 'opacity-40 hover:opacity-100'}`}
                   >
-                    Classic
-                  </button>
-                  <button 
-                    onClick={() => setShinyMode(true)}
-                    className={`px-4 py-1.5 cursor-pointer rounded-full micro-label transition-all ${shinyMode ? (viewMode === 'gigantamax' ? "bg-gmax !text-white shadow-sm font-bold" : viewMode === 'mega' ? "bg-mega !text-white shadow-sm font-bold" : "bg-paper text-ink shadow-sm") : (viewMode === 'gigantamax' ? "text-gmax/60 hover:text-gmax" : viewMode === 'mega' ? "text-mega/60 hover:text-mega" : "opacity-40 hover:opacity-100")}`}
-                  >
-                    Shiny
+                    <div className={`w-10 h-10 rounded-full border flex items-center justify-center transition-all ${viewMode === 'gigantamax' ? 'border-gmax/30 text-gmax shadow-[0_0_15px_rgba(208,0,111,0.1)]' : viewMode === 'mega' ? 'border-mega/30 text-mega shadow-[0_0_15px_rgba(233,176,247,0.1)]' : 'border-line'}`}>
+                      {darkMode ? <Sun size={14} /> : <Moon size={14} />}
+                    </div>
                   </button>
                 </div>
               </div>
 
-              {/* Form Expansion Placeholders */}
-              <div className="flex items-center gap-8">
-                <div className={`h-4 w-px transition-colors ${viewMode === 'gigantamax' ? 'bg-gmax/30' : viewMode === 'mega' ? 'bg-mega/30' : 'bg-line'}`} />
+              {/* Form Expansion Modes */}
+              <div className="flex items-center gap-8 overflow-x-auto no-scrollbar -mx-4 px-4 md:mx-0 md:px-0">
+                <div className={`hidden md:block h-4 w-px transition-colors ${viewMode === 'gigantamax' ? 'bg-gmax/30' : viewMode === 'mega' ? 'bg-mega/30' : 'bg-line'}`} />
                 <button 
                   onClick={() => handleViewModeChange("national")}
-                  className={`micro-label flex items-center gap-2 transition-all ${viewMode === "national" ? "text-ink font-bold" : (viewMode === 'gigantamax' ? "opacity-40 hover:opacity-100 hover:text-gmax" : viewMode === 'mega' ? "opacity-40 hover:opacity-100 hover:text-mega" : "opacity-40 hover:opacity-100")}`}
+                  className={`micro-label whitespace-nowrap flex items-center gap-2 transition-all ${viewMode === "national" ? "text-ink font-bold" : (viewMode === 'gigantamax' ? "opacity-40 hover:opacity-100 hover:text-gmax" : viewMode === 'mega' ? "opacity-40 hover:opacity-100 hover:text-mega" : "opacity-40 hover:opacity-100")}`}
                 >
                   <span>NATIONAL</span>
                 </button>
                 <button 
                   onClick={() => handleViewModeChange("mega")}
-                  className={`micro-label flex items-center gap-2 transition-all ${viewMode === "mega" ? "!text-mega font-bold scale-105" : (viewMode === 'gigantamax' ? "opacity-40 hover:opacity-100 hover:text-gmax" : "opacity-40 hover:opacity-100")}`}
+                  className={`micro-label whitespace-nowrap flex items-center gap-2 transition-all ${viewMode === "mega" ? "!text-mega font-bold scale-105" : (viewMode === 'gigantamax' ? "opacity-40 hover:opacity-100 hover:text-gmax" : "opacity-40 hover:opacity-100")}`}
                 >
                   <span>MEGA EVOLUTIONS</span>
                 </button>
                 <button 
                   onClick={() => handleViewModeChange("gigantamax")}
-                  className={`micro-label flex items-center gap-2 transition-all ${viewMode === "gigantamax" ? "!text-gmax font-bold scale-105" : (viewMode === 'mega' ? "opacity-40 hover:opacity-100 hover:text-mega" : "opacity-40 hover:opacity-100")}`}
+                  className={`micro-label whitespace-nowrap flex items-center gap-2 transition-all ${viewMode === "gigantamax" ? "!text-gmax font-bold scale-105" : (viewMode === 'mega' ? "opacity-40 hover:opacity-100 hover:text-mega" : "opacity-40 hover:opacity-100")}`}
                 >
                   <span>GIGANTAMAX</span>
                 </button>
               </div>
-            </div>
 
-            {/* Global Theme Toggle */}
-            <button 
-              onClick={() => setDarkMode(!darkMode)}
-              className={`flex cursor-pointer items-center gap-3 micro-label transition-all group ${viewMode === 'gigantamax' ? 'text-gmax opacity-100' : viewMode === 'mega' ? 'text-mega opacity-100' : 'opacity-40 hover:opacity-100'}`}
-            >
-              <div className={`w-10 h-10 rounded-full border flex items-center justify-center transition-all ${viewMode === 'gigantamax' ? 'border-gmax/30 text-gmax shadow-[0_0_15px_rgba(208,0,111,0.1)] group-hover:border-gmax' : viewMode === 'mega' ? 'border-mega/30 text-mega shadow-[0_0_15px_rgba(233,176,247,0.1)] group-hover:border-mega' : 'border-line group-hover:border-ink'}`}>
-                {darkMode ? <Sun size={14} /> : <Moon size={14} />}
+              {/* Global Theme Toggle - Desktop Only */}
+              <div className="hidden md:block">
+                <button 
+                  onClick={() => setDarkMode(!darkMode)}
+                  className={`flex cursor-pointer items-center gap-3 micro-label transition-all group ${viewMode === 'gigantamax' ? 'text-gmax opacity-100' : viewMode === 'mega' ? 'text-mega opacity-100' : 'opacity-40 hover:opacity-100'}`}
+                >
+                  <div className={`w-10 h-10 rounded-full border flex items-center justify-center transition-all ${viewMode === 'gigantamax' ? 'border-gmax/30 text-gmax shadow-[0_0_15px_rgba(208,0,111,0.1)] group-hover:border-gmax' : viewMode === 'mega' ? 'border-mega/30 text-mega shadow-[0_0_15px_rgba(233,176,247,0.1)] group-hover:border-mega' : 'border-line group-hover:border-ink'}`}>
+                    {darkMode ? <Sun size={14} /> : <Moon size={14} />}
+                  </div>
+                </button>
               </div>
-            </button>
-          </div>
+            </div>
       </header>
 
       {/* Navigation & Search - Minimal Rail */}
