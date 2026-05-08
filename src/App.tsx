@@ -73,7 +73,7 @@ export default function App() {
     return map;
   }, [indexData]);
 
-  // Sequential background loading logic for JSON data only
+  // Sequential background loading logic for JSON data and images
   useEffect(() => {
     const BATCH_SIZE = 50;
     
@@ -87,11 +87,31 @@ export default function App() {
         
         try {
           await Promise.all(batch.map(async (p) => {
-            await queryClient.fetchQuery({
+            const detail = await queryClient.fetchQuery<PokemonDetail>({
               queryKey: ["pokemonDetail", p.id],
               queryFn: () => cachedFetch(`${BASE_DATA_URL}/pokemon/${p.id}.json`),
               staleTime: Infinity
             });
+
+            // Proactively load images into the global imageCacheManager
+            // This is non-blocking and doesn't trigger state updates per image
+            if (detail) {
+              const forms = detail.forms || [];
+              const gimmicks = detail["gimmick forms"] || [];
+              const allForms = [...forms, ...gimmicks];
+              
+              for (const form of allForms) {
+                const gender = "m";
+                const imageKey = `image asset ${gender}${shinyMode ? " shiny" : ""}` as keyof PokemonForm;
+                const fallbackImage = shinyMode ? p.thumbnail_shiny : p.thumbnail;
+                const url = form?.[imageKey] 
+                  ? `${BASE_IMAGE_URL}/${form[imageKey]}` 
+                  : `${BASE_IMAGE_URL}/${fallbackImage}`;
+                
+                // Silent load - doesn't update component state
+                imageCacheManager.load(url).catch(() => {}); 
+              }
+            }
           }));
 
           if (!cancelled) {
@@ -100,7 +120,6 @@ export default function App() {
           }
         } catch (err) {
           console.error(`Error in background load batch starts at ${loadingCursor}:`, err);
-          // Try to recover by moving forward anyway if it's just one pokemon failing
           if (!cancelled) {
             setLoadingCursor(prev => prev + 1);
           }
@@ -110,7 +129,7 @@ export default function App() {
       loadBatch();
       return () => { cancelled = true; };
     }
-  }, [indexData.length, loadingCursor, queryClient]); // Reduced dependencies to prevent thrashing
+  }, [indexData.length, loadingCursor, queryClient, shinyMode]); // Added shinyMode to reload images if toggled during load
 
   useEffect(() => {
     localStorage.setItem("shinyMode", JSON.stringify(shinyMode));
@@ -308,7 +327,15 @@ export default function App() {
             speciesMatchesOverall = true;
             
             const formIdx = forms.length + gIndex;
-            const isRegistered = (loadedImages[p.id]?.has(formIdx)) || false;
+            
+            // Check if current form image is already in cache or has been loaded by UI
+            const gender = "m";
+            const imageKey = `image asset ${gender}${shinyMode ? " shiny" : ""}` as keyof PokemonForm;
+            const fallbackImage = shinyMode ? p.thumbnail_shiny : p.thumbnail;
+            const url = gf?.[imageKey] ? `${BASE_IMAGE_URL}/${gf[imageKey]}` : `${BASE_IMAGE_URL}/${fallbackImage}`;
+            const isRegisteredInCache = imageCacheManager.get(url) !== undefined && imageCacheManager.get(url) !== 'FAILED';
+
+            const isRegistered = isRegisteredInCache || (loadedImages[p.id]?.has(formIdx)) || false;
             
             if (isRegistered) {
               formsNum++;
@@ -362,7 +389,15 @@ export default function App() {
           
           if (mSearch && matchesRegion && mType) {
             formsDen++;
-            if (loadedImages[p.id]?.has(fIdx)) {
+            
+            // Proactive check in cache
+            const gender = "m";
+            const imageKey = `image asset ${gender}${shinyMode ? " shiny" : ""}` as keyof PokemonForm;
+            const fallbackImage = shinyMode ? p.thumbnail_shiny : p.thumbnail;
+            const url = f?.[imageKey] ? `${BASE_IMAGE_URL}/${f[imageKey]}` : `${BASE_IMAGE_URL}/${fallbackImage}`;
+            const isRegisteredInCache = imageCacheManager.get(url) !== undefined && imageCacheManager.get(url) !== 'FAILED';
+
+            if (isRegisteredInCache || loadedImages[p.id]?.has(fIdx)) {
               formsNum++;
             }
           }
@@ -397,8 +432,19 @@ export default function App() {
 
       if (visible) {
         speciesDen++;
+        
         // Precision check: matches what the user actually sees in the card
-        if (isRegistered && loadedImages[p.id]?.has(matchedFormIndex)) {
+        const gender = "m";
+        const formAtIdx = [
+          ...(detail?.forms || []), 
+          ...(detail?.["gimmick forms"] || [])
+        ][matchedFormIndex];
+        const imageKey = `image asset ${gender}${shinyMode ? " shiny" : ""}` as keyof PokemonForm;
+        const fallbackImage = shinyMode ? p.thumbnail_shiny : p.thumbnail;
+        const url = formAtIdx?.[imageKey] ? `${BASE_IMAGE_URL}/${formAtIdx[imageKey]}` : `${BASE_IMAGE_URL}/${fallbackImage}`;
+        const isRegisteredInCache = imageCacheManager.get(url) !== undefined && imageCacheManager.get(url) !== 'FAILED';
+
+        if (isRegistered && (isRegisteredInCache || loadedImages[p.id]?.has(matchedFormIndex))) {
           speciesNum++;
         }
       }
@@ -412,7 +458,7 @@ export default function App() {
     }).filter(p => p.visible);
 
     return { filteredIndex: results, stats: { speciesNum, speciesDen, formsNum, formsDen } };
-  }, [indexData, megaIndexData, gmaxIndexData, searchQuery, selectedRegion, selectedType, queryClient, lastDetailFetchTime, viewMode, loadedImages]);
+  }, [indexData, megaIndexData, gmaxIndexData, searchQuery, selectedRegion, selectedType, queryClient, lastDetailFetchTime, viewMode, loadedImages, shinyMode]);
 
   const sections = useMemo(() => {
     const isFiltering = searchQuery !== "" || selectedType !== "All" || selectedRegion !== "All" || viewMode !== "national";
