@@ -1,6 +1,6 @@
 {
   "name": "Poké.d3x",
-  "description": "A minimalistic Pokémon art portfolio by nano.d3m (nano.m0n). Explore artwork, dex entries, and evolution chains in a warm, artistic gallery.",
+  "description": "A high-performance, archival-grade Pokédex tracking species, forms, and variants including Mega Evolutions and Gigantamax forms. Built for speed and precision.",
   "requestFramePermissions": [],
   "majorCapabilities": []
 }
