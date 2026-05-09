@@ -14,6 +14,8 @@
     }
   ],
   "rewrites": [
+    { "source": "/api/data/:path*", "destination": "https://d1nt34i9nvab8r.cloudfront.net/data/:path*" },
+    { "source": "/api/images/:path*", "destination": "https://d1nt34i9nvab8r.cloudfront.net/images/:path*" },
     { "source": "/api/(.*)", "destination": "/server.ts" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
