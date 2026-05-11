@@ -28,6 +28,7 @@ app.get("/api/data/*", async (req, res) => {
       },
       timeout: 10000
     });
+    res.setHeader("Cache-Control", "public, max-age=86400"); // Cache JSON for 24 hours
     res.json(response.data);
   } catch (error: any) {
     const status = error.response?.status || 500;
