@@ -980,7 +980,7 @@ export default function App() {
                     </div>
                   </div>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-px">
+                <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-px">
                   {section.pokemon.map((pokemon) => (
                   <div key={`${pokemon.id}-${pokemon.matchedFormIndex}`} className="museum-cell">
                     <PokemonCard
@@ -1003,7 +1003,7 @@ export default function App() {
               </div>
             ))
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-px">
+            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-px">
               {filteredIndex.map((pokemon) => (
               <div key={`${pokemon.id}-${pokemon.matchedFormIndex}`} className="museum-cell">
                 <PokemonCard

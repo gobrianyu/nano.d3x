@@ -82,28 +82,30 @@ export default function PokemonCard({
     <motion.button
       ref={ref}
       onClick={onClick}
-      className={`group relative aspect-[5/3] w-full flex items-center p-4 bg-transparent transition-all ring-2 cursor-pointer overflow-hidden z-10 
+      className={`group relative aspect-[5/3] w-full flex items-center p-2 sm:p-4 bg-transparent transition-all ring-2 cursor-pointer overflow-hidden z-10 
         ${isSelected ? (isGmaxMode ? 'ring-gmax' : isMegaMode ? 'ring-mega' : 'ring-ink') : 'ring-transparent'} 
         ${isGmaxMode ? 'hover:ring-gmax gmax-border-pulse' : isMegaMode ? 'hover:ring-mega mega-border-pulse' : 'hover:ring-ink'}`}
     >
       {/* Name - Background subtle text */}
-      <div className={`absolute left-4 bottom-3 micro-label transition-all pointer-events-none z-10 
+      <div className={`absolute left-2 sm:left-4 bottom-2 sm:bottom-3 micro-label transition-all pointer-events-none z-10 max-w-[60%] truncate
         ${isGmaxMode ? '!text-gmax/40 group-hover:!text-gmax group-hover:opacity-100 font-bold' : 
           isMegaMode ? '!text-mega/40 group-hover:!text-mega group-hover:opacity-100 font-bold' : 
-          'opacity-40 group-hover:opacity-100'}`}>
+          'opacity-40 group-hover:opacity-100'} 
+        text-[7px] sm:text-[9px]`}>
         {pokemonName}
       </div>
 
       {/* Dex ID - Top Right */}
-      <div className={`absolute top-3 right-4 micro-label transition-all origin-right z-10 
+      <div className={`absolute top-2 sm:top-3 right-2 sm:right-4 micro-label transition-all origin-right z-10 
         ${isGmaxMode ? '!text-gmax/40 group-hover:!text-gmax opacity-100 group-hover:scale-110 font-bold' : 
           isMegaMode ? '!text-mega/40 group-hover:!text-mega opacity-100 group-hover:scale-110 font-bold' : 
-          'text-ink opacity-40 group-hover:opacity-100 group-hover:scale-110'}`}>
+          'text-ink opacity-40 group-hover:opacity-100 group-hover:scale-110'}
+        text-[7px] sm:text-[9px]`}>
         {String(pokemon.id).padStart(4, "0")}
       </div>
       
       {/* Image - Left Centered */}
-      <div className="h-full aspect-square flex items-center justify-center relative z-10">
+      <div className="h-full aspect-square flex items-center justify-center relative z-10 shrink-0">
         {/* Theme Gradient Background centered on image */}
         {isGmaxMode && (
           <div className="opacity-50 absolute inset-[-30%] gmax-gradient pointer-events-none z-[-1]" />
@@ -115,7 +117,7 @@ export default function PokemonCard({
           <>
             {isLoading && (
               <div className="absolute inset-0 flex items-center justify-center">
-                <div className="w-4 h-4 border border-ink/10 border-t-ink rounded-full animate-spin" />
+                <div className="w-3 h-3 sm:w-4 sm:h-4 border border-ink/10 border-t-ink rounded-full animate-spin" />
               </div>
             )}
             <img
@@ -127,8 +129,8 @@ export default function PokemonCard({
           </>
         ) : (
           <div className="flex flex-col items-center justify-center opacity-40 group-hover:opacity-80 transition-opacity">
-            <HelpCircle size={40} strokeWidth={1} className="opacity-20" />
-            <span className="text-[7px] micro-label tracking-tighter mt-1 opacity-40">In-Progress</span>
+            <HelpCircle className="opacity-20 w-6 h-6 sm:w-8 sm:h-8 md:w-10 md:h-10" strokeWidth={1} />
+            <span className="text-[5px] sm:text-[6px] md:text-[7px] micro-label tracking-tighter mt-0.5 sm:mt-1 opacity-40">In-Progress</span>
           </div>
         )}
       </div>
