@@ -15,12 +15,14 @@ Built to showcase Pokémon illustrations by [**@nano.m0n**](https://www.instagra
 ## Tech Stack
 
 - **Framework**: React 18+ with Vite
-- **Data Orchestration**: @tanstack/react-query for high-performance caching and stale-while-revalidate data fetching.
+- **Infrastructure**: Direct CloudFront API integration
+- **Data Orchestration**: @tanstack/react-query + Custom persistent Cache API implementation.
 - **Animations**: motion/react (Framer Motion)
 - **Styling**: Tailwind CSS
 - **Typography**: Space Grotesk, Inter
+- **Icons**: Lucide React
 
-## Metadata & Credits
+## Credits & Disclaimer
 
 - **Artist**: @nano.m0n
 - **Disclaimer**: Pokémon is a trademark of Nintendo, Creatures Inc., and GAME FREAK. This project is a non-commercial fan-centric portfolio.
