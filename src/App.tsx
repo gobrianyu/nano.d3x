@@ -1061,7 +1061,7 @@ export default function App() {
             animate={{ y: 0 }}
             exit={{ y: -100 }}
             transition={{ type: "spring", damping: 25, stiffness: 200 }}
-            className="fixed top-0 left-0 w-full z-50 bg-paper/80 backdrop-blur-xl border-b border-line px-4 md:px-8 h-16 flex items-center justify-between gap-4 md:gap-8 shadow-lg"
+            className="fixed top-0 left-0 w-full z-[60] bg-paper/80 backdrop-blur-xl border-b border-line px-4 md:px-8 h-16 flex items-center justify-between gap-4 md:gap-8 shadow-lg"
           >
             {/* Title - Compact */}
             <div className="flex-shrink-0">
@@ -1110,10 +1110,10 @@ export default function App() {
                 <AnimatePresence>
                   {activeFilter === "combined-sticky" && (
                     <motion.div
-                      initial={{ opacity: 0, y: 10 }}
+                      initial={{ opacity: 0, y: -10 }}
                       animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: 10 }}
-                      className="fixed top-16 left-0 w-full bg-paper border-b border-line shadow-2xl p-8 z-50 overflow-y-auto h-[calc(100dvh-4rem)] md:h-auto md:max-h-[70vh] no-scrollbar flex justify-center"
+                      exit={{ opacity: 0, y: -10 }}
+                      className="fixed top-16 left-0 w-full bg-paper border-b border-line shadow-2xl p-8 z-[70] overflow-y-auto h-[calc(100dvh-4rem)] md:h-auto md:max-h-[70vh] no-scrollbar flex justify-center"
                     >
                       <div className="w-full max-w-4xl space-y-12 pb-24">
                         <div className="flex justify-between items-center border-b border-line pb-4">

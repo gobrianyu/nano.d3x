@@ -62,7 +62,7 @@ export default function FilterDropdown<T extends string>({
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
-              className={`absolute top-full z-50 pointer-events-none ${compact ? "mt-2 right-1/2 translate-x-1/2" : "mt-8 right-0"}`}
+              className={`absolute top-full z-[60] pointer-events-none ${compact ? "mt-2 right-1/2 translate-x-1/2" : "mt-8 right-0"}`}
             >
               <div className={`bg-paper border border-line shadow-2xl p-6 pointer-events-auto flex flex-col gap-1 min-w-[200px] ${compact ? "max-h-[300px] overflow-y-auto no-scrollbar" : ""}`}>
                 <div className="flex justify-between items-center mb-4 pb-2 border-b border-line">
