@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useState, useEffect, useMemo, useRef, useCallback } from "react";
+import { useState, useEffect, useMemo, useRef, useCallback, FormEvent } from "react";
 import { PokemonDetail, PokemonForm, PokemonIndexItem, PokemonType } from "./types";
 import { BASE_DATA_URL, BASE_IMAGE_URL, REGIONS, TYPE_LIST, CLOUDFRONT_ASSETS_URL, MEGA_POKEMON_IDS, GIGANTAMAX_POKEMON_IDS } from "./constants";
 import PokemonCard from "./components/PokemonCard";
@@ -15,10 +15,26 @@ import { Instagram, Search, HelpCircle, X, Sun, Moon, ArrowUp, Filter, Sparkles 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { cachedFetch, imageCacheManager } from "./lib/cacheService";
 
+function matchSearchQuery(query: string, id: number, ...fields: (string | undefined)[]) {
+  const trimmed = query.trim();
+  if (trimmed === "") return true;
+  const terms = trimmed.split(",").map(t => t.trim()).filter(t => t !== "");
+  if (terms.length === 0) return true;
+  const idStr = id.toString();
+  return terms.some(term => {
+    const termLower = term.toLowerCase();
+    if (idStr.includes(termLower)) return true;
+    return fields.some(field => field && field.toLowerCase().includes(termLower));
+  });
+}
+
 export default function App() {
   const [selectedPokemonId, setSelectedPokemonId] = useState<number | null>(null);
   const [selectedFormIndex, setSelectedFormIndex] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
+  const [searchInputValue, setSearchInputValue] = useState("");
+  const [isMainFocused, setIsMainFocused] = useState(false);
+  const [isStickyFocused, setIsStickyFocused] = useState(false);
   const [selectedRegion, setSelectedRegion] = useState("All");
   const [selectedType, setSelectedType] = useState<PokemonType | "All">("All");
   const [activeFilter, setActiveFilter] = useState<string | null>(null);
@@ -72,6 +88,14 @@ export default function App() {
     indexData.forEach((p, i) => map.set(p.id, i));
     return map;
   }, [indexData]);
+
+  const showMainSearchButton = isMainFocused && 
+    searchInputValue.trim() !== "" && 
+    searchInputValue.trim().toLowerCase() !== searchQuery.trim().toLowerCase();
+
+  const showStickySearchButton = isStickyFocused && 
+    searchInputValue.trim() !== "" && 
+    searchInputValue.trim().toLowerCase() !== searchQuery.trim().toLowerCase();
 
   // Sequential background loading logic for JSON data and images
   useEffect(() => {
@@ -192,6 +216,7 @@ export default function App() {
     setSelectedRegion("All");
     setSelectedType("All");
     setSearchQuery("");
+    setSearchInputValue("");
     setActiveFilter(null);
 
     // Trigger transitions ONLY when entering a special mode
@@ -218,14 +243,32 @@ export default function App() {
   }, [viewMode]);
 
   const handleClearSearch = () => {
+    setSearchInputValue("");
     setSearchQuery("");
     searchInputRef.current?.blur();
+    stickySearchInputRef.current?.blur();
   };
 
   const handleResetFilters = () => {
+    setSearchInputValue("");
     setSearchQuery("");
     setSelectedRegion("All");
     setSelectedType("All");
+  };
+
+  const handleSearchSubmit = (e: FormEvent) => {
+    e.preventDefault();
+    const trimmedInput = searchInputValue.trim();
+    if (trimmedInput === "") {
+      return;
+    }
+    setSearchQuery(trimmedInput);
+    searchInputRef.current?.blur();
+    stickySearchInputRef.current?.blur();
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth"
+    });
   };
 
   const filterSectionRef = useRef<HTMLDivElement>(null);
@@ -287,9 +330,7 @@ export default function App() {
           ? p.thumbnail.split("-")[1]?.split(".")[0]?.toLowerCase() 
           : p.thumbnail.split(".")[0]?.toLowerCase() || "";
         
-        const matchesSearchFallback = searchQuery === "" || 
-                                     fallbackName.includes(searchQuery.toLowerCase()) || 
-                                     p.id.toString().includes(searchQuery);
+        const matchesSearchFallback = matchSearchQuery(searchQuery, p.id, fallbackName);
 
         if (!detail) {
           // If no detail, we only count as species denominator if search matches
@@ -315,10 +356,7 @@ export default function App() {
           if (viewMode === "gigantamax" && !isGigantamaxOrEternamax) return;
           
           // Filter check
-          const matchesSearch = searchQuery === "" || 
-                               gf.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                               gf["special form"]?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                               p.id.toString().includes(searchQuery);
+          const matchesSearch = matchSearchQuery(searchQuery, p.id, gf.name, gf["special form"]);
           
           const matchesType = selectedType === "All" || gf.type.includes(selectedType);
 
@@ -384,7 +422,7 @@ export default function App() {
         
         // Denominator logic: how many forms match filters
         allForms.forEach((f, fIdx) => {
-          const mSearch = searchQuery === "" || f.name.toLowerCase().includes(searchQuery.toLowerCase()) || p.id.toString().includes(searchQuery);
+          const mSearch = matchSearchQuery(searchQuery, p.id, f.name);
           const mType = selectedType === "All" || f.type.includes(selectedType);
           
           if (mSearch && matchesRegion && mType) {
@@ -422,11 +460,7 @@ export default function App() {
         }
       }
 
-      const matchesSearch = 
-        searchQuery === "" ||
-        officialName.includes(searchQuery.toLowerCase()) || 
-        p.id.toString().includes(searchQuery) ||
-        fallbackName.includes(searchQuery.toLowerCase());
+      const matchesSearch = matchSearchQuery(searchQuery, p.id, officialName, fallbackName);
       
       const visible = matchesSearch && matchesRegion && matchesType;
 
@@ -790,30 +824,51 @@ export default function App() {
         <div className="flex flex-col gap-0 border-b border-line">
           <div className="flex flex-col lg:flex-row gap-12 items-start lg:items-end justify-between pb-4">
             <div className="flex flex-col md:flex-row gap-12 flex-1 w-full items-center md:items-center justify-between">
-              <div className="relative group w-full max-w-md">
+              <form onSubmit={handleSearchSubmit} className="relative group w-full max-w-md">
                 <Search className="absolute left-0 top-1/2 -translate-y-1/2 text-ink/30 group-focus-within:text-ink transition-colors" size={16} />
                 <input
                   ref={searchInputRef}
                   type="text"
                   placeholder="Search ID or Name..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full bg-transparent border-none pl-6 pr-8 py-1 focus:outline-none text-sm placeholder:opacity-30 text-ink"
+                  value={searchInputValue}
+                  onChange={(e) => setSearchInputValue(e.target.value)}
+                  onFocus={() => setIsMainFocused(true)}
+                  onBlur={() => setIsMainFocused(false)}
+                  className="w-full bg-transparent border-none pl-6 pr-24 py-1 focus:outline-none text-sm placeholder:opacity-30 text-ink"
                 />
-                <AnimatePresence>
-                  {searchQuery && (
-                    <motion.button
-                      initial={{ scale: 0.8, opacity: 0 }}
-                      animate={{ scale: 1, opacity: 1 }}
-                      exit={{ scale: 0.8, opacity: 0 }}
-                      onClick={handleClearSearch}
-                      className="absolute right-0 top-1/2 -translate-y-1/2 p-1 hover:bg-ink/5 rounded-full transition-colors"
-                    >
-                      <X size={14} className="opacity-40 hover:opacity-100 transition-opacity text-ink" />
-                    </motion.button>
-                  )}
-                </AnimatePresence>
-              </div>
+                <div className="absolute right-0 top-1/2 -translate-y-1/2 flex items-center gap-2">
+                  <AnimatePresence>
+                    {searchInputValue && (
+                      <motion.button
+                        type="button"
+                        initial={{ scale: 0.8, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        exit={{ scale: 0.8, opacity: 0 }}
+                        onClick={handleClearSearch}
+                        className="p-1 hover:bg-ink/5 rounded-full transition-colors flex items-center justify-center cursor-pointer"
+                      >
+                        <X size={14} className="opacity-40 hover:opacity-100 transition-opacity text-ink" />
+                      </motion.button>
+                    )}
+                  </AnimatePresence>
+                  <AnimatePresence>
+                    {showMainSearchButton && (
+                      <motion.button
+                        type="submit"
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.9 }}
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                        }}
+                        className="px-2.5 py-0.5 text-[10px] font-mono font-bold uppercase tracking-wider bg-ink text-paper dark:bg-paper dark:text-ink rounded hover:opacity-85 transition-opacity cursor-pointer"
+                      >
+                        Search
+                      </motion.button>
+                    )}
+                  </AnimatePresence>
+                </div>
+              </form>
 
               <div className="flex flex-wrap items-center gap-x-12 gap-y-6 w-full md:w-auto">
                 {viewMode === "national" && (
@@ -1072,30 +1127,51 @@ export default function App() {
 
             {/* Search - Filling Space */}
             <div className="flex-1 max-w-2xl flex items-center gap-4">
-              <div className="flex-1 relative group">
+              <form onSubmit={handleSearchSubmit} className="flex-1 relative group">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-ink/30 group-focus-within:text-ink transition-colors" size={14} />
                 <input
                   ref={stickySearchInputRef}
                   type="text"
                   placeholder="Search..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full bg-ink/5 dark:bg-paper/5 border border-line focus:border-ink pl-10 pr-10 py-2 focus:outline-none text-[13px] placeholder:opacity-30 text-ink transition-all"
+                  value={searchInputValue}
+                  onChange={(e) => setSearchInputValue(e.target.value)}
+                  onFocus={() => setIsStickyFocused(true)}
+                  onBlur={() => setIsStickyFocused(false)}
+                  className="w-full bg-ink/5 dark:bg-paper/5 border border-line focus:border-ink pl-10 pr-24 py-2 focus:outline-none text-[13px] placeholder:opacity-30 text-ink transition-all"
                 />
-                <AnimatePresence>
-                  {searchQuery && (
-                    <motion.button
-                      initial={{ opacity: 0, scale: 0.8 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      exit={{ opacity: 0, scale: 0.8 }}
-                      onClick={handleClearSearch}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 p-1 hover:bg-ink/10 rounded-full transition-colors"
-                    >
-                      <X size={12} className="text-ink/40" />
-                    </motion.button>
-                  )}
-                </AnimatePresence>
-              </div>
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
+                  <AnimatePresence>
+                    {searchInputValue && (
+                      <motion.button
+                        type="button"
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.8 }}
+                        onClick={handleClearSearch}
+                        className="p-1 hover:bg-ink/10 rounded-full transition-colors flex items-center justify-center cursor-pointer"
+                      >
+                        <X size={12} className="text-ink/40" />
+                      </motion.button>
+                    )}
+                  </AnimatePresence>
+                  <AnimatePresence>
+                    {showStickySearchButton && (
+                      <motion.button
+                        type="submit"
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.9 }}
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                        }}
+                        className="px-2 py-0.5 text-[9px] font-mono font-bold uppercase tracking-wider bg-ink text-paper dark:bg-paper dark:text-ink rounded hover:opacity-85 transition-opacity cursor-pointer"
+                      >
+                        Search
+                      </motion.button>
+                    )}
+                  </AnimatePresence>
+                </div>
+              </form>
 
               {/* Combined Filters Icon Button - Integrated with Search Bar visually */}
               <div className="relative">
