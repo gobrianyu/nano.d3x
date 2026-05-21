@@ -131,7 +131,7 @@ export default function PokemonModal({ initialId, initialFormIndex = 0, onClose,
   // Early returns for Loading / Error / Missing Data
   if (loading && !detail) {
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 modal-overlay" onClick={onClose}>
+      <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 modal-overlay" onClick={onClose}>
         <motion.div 
           initial={{ opacity: 0 }} 
           animate={{ opacity: 1 }} 
@@ -156,7 +156,7 @@ export default function PokemonModal({ initialId, initialFormIndex = 0, onClose,
 
   if (fetchError || (detail && (!detail["dex number"] || !allForms.length))) {
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 modal-overlay" onClick={onClose}>
+      <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 modal-overlay" onClick={onClose}>
         <motion.div 
           initial={{ opacity: 0 }} 
           animate={{ opacity: 1 }} 
@@ -247,7 +247,7 @@ export default function PokemonModal({ initialId, initialFormIndex = 0, onClose,
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center modal-overlay overflow-hidden p-4 md:p-8" onClick={onClose}>
+    <div className="fixed inset-0 z-[100] flex items-center justify-center modal-overlay overflow-hidden p-4 md:p-8" onClick={onClose}>
       {/* Background Dimmer */}
       <motion.div 
         initial={{ opacity: 0 }} 
