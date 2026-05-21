@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef, TouchEvent } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { X, ChevronLeft, ChevronRight, Weight, Ruler, Info, Venus, Mars, HelpCircle } from "lucide-react";
 import { PokemonDetail, PokemonForm, PokemonIndexItem, PokemonType } from "../types";
@@ -49,6 +49,18 @@ export default function PokemonModal({ initialId, initialFormIndex = 0, onClose,
   const [gender, setGender] = useState<"m" | "f">("m");
   const [hoveredFormIndex, setHoveredFormIndex] = useState<number | null>(null);
   const [isPortrait, setIsPortrait] = useState(window.innerHeight > window.innerWidth);
+
+  const portraitScrollRef = useRef<HTMLDivElement>(null);
+  const desktopScrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (portraitScrollRef.current) {
+      portraitScrollRef.current.scrollTop = 0;
+    }
+    if (desktopScrollRef.current) {
+      desktopScrollRef.current.scrollTop = 0;
+    }
+  }, [id, currentIndex]);
   const [isNarrow, setIsNarrow] = useState(window.innerWidth < 1280);
 
   useEffect(() => {
@@ -205,17 +217,31 @@ export default function PokemonModal({ initialId, initialFormIndex = 0, onClose,
     }
   };
 
-  // Drag constraints and handlers for swipe
-  const dragThreshold = 50;
-  const onDragEnd = (_event: any, info: any) => {
-    const swipe = info.offset.x;
-    const velocity = info.velocity.x;
+  // Gesture Touch handlers for swipe navigation on mobile devices
+  const touchStartX = useRef<number | null>(null);
+  const touchStartY = useRef<number | null>(null);
 
-    if (swipe < -dragThreshold || velocity < -500) {
-      handleNext();
-    } else if (swipe > dragThreshold || velocity > 500) {
-      handlePrev();
+  const handleTouchStart = (e: TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+    touchStartY.current = e.touches[0].clientY;
+  };
+
+  const handleTouchEnd = (e: TouchEvent) => {
+    if (touchStartX.current === null || touchStartY.current === null) return;
+    const diffX = e.changedTouches[0].clientX - touchStartX.current;
+    const diffY = e.changedTouches[0].clientY - touchStartY.current;
+
+    // Check if horizontal movement is dominant and meets a gesture threshold (e.g. 50px)
+    if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 50) {
+      if (diffX > 0) {
+        handlePrev();
+      } else {
+        handleNext();
+      }
     }
+
+    touchStartX.current = null;
+    touchStartY.current = null;
   };
 
   const handleFormSelect = (idx: number) => {
@@ -259,6 +285,8 @@ export default function PokemonModal({ initialId, initialFormIndex = 0, onClose,
       <div className="relative flex flex-col justify-center items-center gap-4 w-full h-full max-h-screen pointer-events-none z-10 m-auto">
           <div 
             onClick={(e) => e.stopPropagation()}
+            onTouchStart={handleTouchStart}
+            onTouchEnd={handleTouchEnd}
             style={{ touchAction: "pan-y" }}
             className={`bg-paper shadow-[0_32px_64px_-16px_rgba(0,0,0,0.3)] overflow-hidden relative flex z-10 text-ink border pointer-events-auto transition-all duration-300 min-h-0 ${
               isGigantamax ? 'border-gmax gmax-border-pulse' : isMega ? 'border-mega' : 'border-line'
@@ -277,7 +305,10 @@ export default function PokemonModal({ initialId, initialFormIndex = 0, onClose,
                 Close
               </button>
             </div>
-            <div className={`flex flex-1 ${isPortrait ? "flex-col overflow-y-auto custom-scrollbar" : "flex-row overflow-hidden"}`}>
+            <div 
+              ref={portraitScrollRef}
+              className={`flex flex-1 ${isPortrait ? "flex-col overflow-y-auto custom-scrollbar" : "flex-row overflow-hidden"}`}
+            >
               <div className={`flex flex-col flex-1 ${isPortrait ? "h-auto" : "flex-row overflow-hidden"}`}>
                 {/* Scrollable Content Container (Portrait) */}
                 {isPortrait ? (
@@ -494,7 +525,10 @@ export default function PokemonModal({ initialId, initialFormIndex = 0, onClose,
                     </div>
 
                     {/* Details Panel - Desktop */}
-                    <div className="flex flex-col relative box-border md:w-5/12 px-8 py-12 lg:px-10 overflow-y-auto custom-scrollbar">
+                    <div 
+                      ref={desktopScrollRef}
+                      className="flex flex-col relative box-border md:w-5/12 px-8 py-12 lg:px-10 overflow-y-auto custom-scrollbar"
+                    >
                       <header className="mb-12">
                         <div className="flex flex-col gap-1">
                           {(form.gimmick === "gmax" || form.gimmick === "emax") && (
@@ -579,7 +613,7 @@ export default function PokemonModal({ initialId, initialFormIndex = 0, onClose,
             <button 
               disabled={currentIndex === 0}
               onClick={(e) => { e.stopPropagation(); handlePrev(); }}
-              className={`flex items-center gap-3 px-8 py-3 micro-label transition-all active:scale-95 ${
+              className={`flex items-center gap-3 px-8 py-3 micro-label transition-all active:scale-95 focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 ${
                 currentIndex === 0 
                   ? "opacity-10" 
                   : "text-ink/60 hover:text-ink hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer"
@@ -591,7 +625,7 @@ export default function PokemonModal({ initialId, initialFormIndex = 0, onClose,
             <button 
               disabled={currentIndex === gallery.length - 1}
               onClick={(e) => { e.stopPropagation(); handleNext(); }}
-              className={`flex items-center gap-3 px-8 py-3 micro-label transition-all active:scale-95 ${
+              className={`flex items-center gap-3 px-8 py-3 micro-label transition-all active:scale-95 focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 ${
                 currentIndex === gallery.length - 1 
                   ? "opacity-10" 
                   : "text-ink/60 hover:text-ink hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer"
