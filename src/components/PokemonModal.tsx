@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useRef, TouchEvent } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { X, ChevronLeft, ChevronRight, Weight, Ruler, Info, Venus, Mars, HelpCircle } from "lucide-react";
+import { X, ChevronLeft, ChevronRight, Venus, Mars, HelpCircle } from "lucide-react";
 import { PokemonDetail, PokemonForm, PokemonIndexItem, PokemonType } from "../types";
 import { BASE_DATA_URL, BASE_IMAGE_URL, TYPE_COLORS, CLOUDFRONT_ASSETS_URL } from "../constants";
 import StatBar from "./StatBar";
@@ -48,7 +48,22 @@ export default function PokemonModal({ initialId, initialFormIndex = 0, onClose,
 
   const [gender, setGender] = useState<"m" | "f">("m");
   const [hoveredFormIndex, setHoveredFormIndex] = useState<number | null>(null);
-  const [isPortrait, setIsPortrait] = useState(window.innerHeight > window.innerWidth);
+  const [isPortrait, setIsPortrait] = useState(() => {
+    const width = window.innerWidth;
+    const height = window.innerHeight;
+    return height > width || width < 800;
+  });
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [windowWidth, setWindowWidth] = useState(() => window.innerWidth);
+  const [renderSig, setRenderSig] = useState(0);
+
+  // Trigger content-recalculation after layout transition or window resizing finishes
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setRenderSig(prev => prev + 1);
+    }, 350);
+    return () => clearTimeout(timer);
+  }, [isPortrait, isExpanded, windowWidth]);
 
   const portraitScrollRef = useRef<HTMLDivElement>(null);
   const desktopScrollRef = useRef<HTMLDivElement>(null);
@@ -70,6 +85,7 @@ export default function PokemonModal({ initialId, initialFormIndex = 0, onClose,
       // Force portrait on mobile widths OR if aspect ratio is vertical
       const portrait = height > width || width < 800;
       setIsPortrait(portrait);
+      setWindowWidth(width);
       
       // Better threshold for side arrows:
       // Side arrows + margins need ~300px total (150px each side)
@@ -79,6 +95,7 @@ export default function PokemonModal({ initialId, initialFormIndex = 0, onClose,
       setIsNarrow(needsPill);
     };
     window.addEventListener("resize", handleResize);
+    handleResize();
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
@@ -273,7 +290,7 @@ export default function PokemonModal({ initialId, initialFormIndex = 0, onClose,
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center modal-overlay overflow-hidden p-4 md:p-8" onClick={onClose}>
+    <div className={`fixed inset-0 z-[100] flex items-center justify-center modal-overlay overflow-hidden ${isPortrait && isExpanded ? "p-0" : "p-4 md:p-8"}`} onClick={onClose}>
       {/* Background Dimmer */}
       <motion.div 
         initial={{ opacity: 0 }} 
@@ -282,182 +299,326 @@ export default function PokemonModal({ initialId, initialFormIndex = 0, onClose,
         className="fixed inset-0 bg-neutral-900/80 backdrop-blur-[4px] cursor-pointer" 
       />
  
-      <div className="relative flex flex-col justify-center items-center gap-4 w-full h-full max-h-screen pointer-events-none z-10 m-auto">
+      <div className={`relative flex flex-col justify-center items-center gap-4 w-full h-full pointer-events-none z-10 m-auto ${isPortrait && isExpanded ? "p-0 max-w-none max-h-none h-full m-0" : "max-h-screen"}`}>
+          {isPortrait && !isExpanded && (
+            <div className="w-[min(94vw,400px)] flex justify-start pl-1 -mb-2 shrink-0">
+              <span className="font-display text-sm font-black tracking-tighter text-paper select-none">
+                #{String(detail["dex number"]).padStart(4, "0")}
+              </span>
+            </div>
+          )}
           <div 
             onClick={(e) => e.stopPropagation()}
             onTouchStart={handleTouchStart}
             onTouchEnd={handleTouchEnd}
             style={{ touchAction: "pan-y" }}
-            className={`bg-paper shadow-[0_32px_64px_-16px_rgba(0,0,0,0.3)] overflow-hidden relative flex z-10 text-ink border pointer-events-auto transition-all duration-300 min-h-0 ${
+            className={`bg-paper shadow-[0_32px_64px_-16px_rgba(0,0,0,0.3)] overflow-hidden flex z-10 text-ink border pointer-events-auto transition-all duration-300 min-h-0 ${
               isGigantamax ? 'border-gmax gmax-border-pulse' : isMega ? 'border-mega' : 'border-line'
             } ${
               isPortrait 
-                ? "flex-col w-[min(94vw,500px)] flex-1" 
-                : "flex-row aspect-[5/3] w-[min(98vw,calc((100vh-180px)*5/3),1200px)]"
+                ? (isExpanded 
+                    ? "fixed inset-0 w-full h-full max-h-screen m-0 border-0 rounded-none flex-col shadow-none" 
+                    : "relative flex-col w-[min(94vw,400px)] h-auto rounded-none shrink-0") 
+                : "relative flex-row aspect-[5/3] w-[min(98vw,calc((100vh-180px)*5/3),1200px)] rounded-none"
             }`}
           >
             {/* Global Floating Close Button */}
-            <div className="absolute top-6 right-6 z-50 pointer-events-none">
-              <button 
-                onClick={onClose}
-                className={`pointer-events-auto cursor-pointer bg-paper border border-line px-3 py-1.5 micro-label transition-all shadow-sm hover:bg-ink hover:text-paper text-ink`}
-              >
-                Close
-              </button>
-            </div>
+            {(!isPortrait || isExpanded) && (
+              <div className="absolute top-6 right-6 z-50 pointer-events-none">
+                <button 
+                  onClick={onClose}
+                  className={`pointer-events-auto cursor-pointer bg-paper border border-line px-3 py-1.5 micro-label transition-all shadow-sm hover:bg-ink hover:text-paper text-ink`}
+                >
+                  Close
+                </button>
+              </div>
+            )}
+
+            {/* Back Button for Portrait Expanded Mode */}
+            {isPortrait && isExpanded && (
+              <div className="absolute top-6 left-6 z-50 pointer-events-auto">
+                <button 
+                  onClick={() => setIsExpanded(false)}
+                  className="cursor-pointer bg-paper border border-line px-3 py-1.5 micro-label transition-all shadow-sm hover:bg-ink hover:text-paper text-ink"
+                >
+                  ← Card
+                </button>
+              </div>
+            )}
+
             <div 
               ref={portraitScrollRef}
-              className={`flex flex-1 ${isPortrait ? "flex-col overflow-y-auto custom-scrollbar" : "flex-row overflow-hidden"}`}
+              className={`flex flex-1 ${
+                isPortrait 
+                  ? (isExpanded ? "flex-col overflow-y-auto custom-scrollbar" : "flex-col overflow-hidden") 
+                  : "flex-row overflow-hidden"
+              }`}
             >
               <div className={`flex flex-col flex-1 ${isPortrait ? "h-auto" : "flex-row overflow-hidden"}`}>
                 {/* Scrollable Content Container (Portrait) */}
                 {isPortrait ? (
-                  <div className="flex flex-col w-full h-auto">
-                    {/* Header */}
-                    <div className="px-8 py-6 space-y-1 shrink-0">
-                      <span className={`font-display text-xl font-black tracking-tighter mb-2 block ${isGigantamax ? 'text-gmax' : isMega ? 'text-mega' : ''}`}>
-                        #{String(detail["dex number"]).padStart(4, "0")}
-                      </span>
-                      
-                      {(form.gimmick === "gmax" || form.gimmick === "emax") && (
-                        <div className="flex items-center gap-2 mb-1">
-                          <img src={`${CLOUDFRONT_ASSETS_URL}/gmax.png`} alt="G-Max" className="w-5 h-5 object-contain" onError={(e) => (e.currentTarget.style.display = "none")} />
-                          <span className="text-[11px] font-bold tracking-[0.2em] uppercase leading-none text-gmax">
-                            {form.gimmick === "emax" ? "ETERNAMAX" : "GIGANTAMAX"}
-                          </span>
+                  !isExpanded ? (
+                    <div className="flex flex-col w-full h-auto p-0 select-none shrink-0">
+                      {/* Image Area */}
+                      <div className={`relative w-full aspect-square flex items-center justify-center overflow-hidden shrink-0 ${
+                        isGigantamax ? 'bg-gmax-soft gmax-gradient' : 
+                        isMega ? 'bg-mega-soft mega-gradient' : 
+                        'shiny-gradient bg-white dark:bg-black/20'
+                      }`}>
+                        {/* Pokémon Name (Top Left inside Image area) */}
+                        <div className="absolute top-4 left-4 right-24 flex flex-col gap-0.5 overflow-visible min-w-0 pointer-events-auto z-30">
+                          <Textfit 
+                            key={`name-p-non-${id}-${currentFormIndex}-${renderSig}`}
+                            {...({
+                              mode: "single",
+                              max: 22, 
+                              min: 14,
+                              className: `font-display font-black tracking-tighter leading-tight ${isGigantamax ? 'bg-gradient-to-b from-white from-0% via-white via-35% via-[#d0006f] via-55% to-[#d0006f] to-100% bg-clip-text text-transparent drop-shadow-[0_2px_4px_rgba(208,0,111,0.3)]' : 'text-ink'}`,
+                              children: form.name
+                            } as any)}
+                          />
                         </div>
-                      )}
 
-                      <div className="flex items-baseline gap-2 overflow-visible min-w-0 w-full">
-                        <Textfit 
-                          {...({
-                            mode: "single",
-                            max: 40, 
-                            min: 16,
-                            className: `font-display font-black tracking-tighter leading-[1.1] px-1 whitespace-nowrap w-full ${isGigantamax ? 'bg-gradient-to-b from-white from-0% via-white via-35% via-[#d0006f] via-55% to-[#d0006f] to-100% bg-clip-text text-transparent drop-shadow-[0_2px_4px_rgba(208,0,111,0.3)]' : 'text-ink'}`,
-                            children: form.name
-                          } as any)}
-                        />
-                      </div>
-
-                      {form["special form"] && (
-                        <div className="flex items-center gap-2 mt-0.5">
-                          <div className={`w-1.5 h-1.5 rounded-full bg-ink/20`} />
-                          <span className={`text-[11px] font-bold tracking-[0.2em] uppercase leading-none opacity-80`}>{form["special form"]}</span>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Image */}
-                    <div className={`relative aspect-square flex flex-col items-center justify-center shrink-0 border-t border-b border-line ${
-                      isGigantamax ? 'bg-gmax-soft gmax-gradient' : 
-                      isMega ? 'bg-mega-soft mega-gradient' : 
-                      'shiny-gradient bg-white dark:bg-black/20'
-                    }`}>
-                      <div className="w-full h-full flex items-center justify-center p-8 relative">
-                        {imgLoading && !imgError && (
-                          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                            <div className={`w-10 h-10 border border-t-current rounded-full animate-spin ${isGigantamax ? 'text-gmax' : isMega ? 'text-mega' : 'text-ink'}`} />
-                          </div>
-                        )}
-                        {!imgError && !imgLoading && cachedImageUrl ? (
-                            <img
-                              src={cachedImageUrl}
-                              alt={form.name}
-                              referrerPolicy="no-referrer"
-                              className={`max-w-full max-h-full object-contain transition-opacity duration-300 opacity-100 ${
-                                isGigantamax ? 'drop-shadow-[0_20px_60px_rgba(208,0,111,0.3)]' : 
-                                isMega ? 'drop-shadow-[0_20px_60px_rgba(233,176,247,0.3)]' : 
-                                'drop-shadow-[0_20px_60px_rgba(0,0,0,0.08)] dark:drop-shadow-[0_20px_60px_rgba(255,255,255,0.03)]'
-                              }`}
-                            />
-                        ) : !imgLoading && imgError ? (
-                          <div className="flex flex-col items-center gap-4 text-center opacity-20">
-                            <span className="font-display text-9xl font-black italic">?</span>
-                            <p className="micro-label tracking-[0.5em]">No Asset</p>
-                          </div>
-                        ) : null}
-                      </div>
-                      {allForms.length > 1 && !isGimmickOnly && (
-                        <div className="absolute inset-0 pointer-events-none">
-                          <div 
-                            className="absolute top-1/2 -translate-y-1/2 right-0 flex flex-col items-end z-40 group/selector pointer-events-none"
-                            onMouseLeave={() => setHoveredFormIndex(null)}
+                        {/* Top Right Close Button */}
+                        <div className="absolute top-4 right-4 z-50 pointer-events-auto">
+                          <button 
+                            onClick={onClose}
+                            className="cursor-pointer bg-paper hover:bg-ink hover:text-paper text-[10px] font-mono font-black tracking-[0.15em] uppercase text-ink border border-line px-2.5 py-1.5 transition-all shadow-sm rounded-none"
                           >
-                             <div className="flex flex-col gap-0.5 items-end max-h-[300px] min-w-[500px] overflow-y-auto no-scrollbar py-20 pr-6 pl-[300px] scroll-smooth pointer-events-auto">
+                            Close
+                          </button>
+                        </div>
+
+                        <div className="w-full h-full flex items-center justify-center pt-16 pb-12 px-6 relative">
+                          {imgLoading && !imgError && (
+                            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                              <div className={`w-8 h-8 border border-t-current rounded-full animate-spin ${isGigantamax ? 'text-gmax' : isMega ? 'text-mega' : 'text-ink'}`} />
+                            </div>
+                          )}
+                          {!imgError && !imgLoading && cachedImageUrl ? (
+                              <img
+                                src={cachedImageUrl}
+                                alt={form.name}
+                                referrerPolicy="no-referrer"
+                                className={`max-w-full max-h-full object-contain transition-opacity duration-300 opacity-100 p-2 ${
+                                  isGigantamax ? 'drop-shadow-[0_12px_36px_rgba(208,0,111,0.3)]' : 
+                                  isMega ? 'drop-shadow-[0_12px_36px_rgba(233,176,247,0.3)]' : 
+                                  'drop-shadow-[0_12px_36px_rgba(0,0,0,0.06)]'
+                                }`}
+                              />
+                          ) : !imgLoading && imgError ? (
+                            <div className="flex flex-col items-center gap-2 text-center opacity-20">
+                              <span className="font-display text-6xl font-black italic">?</span>
+                              <p className="micro-label tracking-[0.3em] text-[9px]">No Asset</p>
+                            </div>
+                          ) : null}
+                        </div>
+
+                        {/* Special Form / Gimmick text at the bottom-center of the image square */}
+                        <div className="absolute bottom-3 left-0 right-0 flex flex-col items-center justify-center gap-1 pointer-events-none z-30">
+                          {(form.gimmick === "gmax" || form.gimmick === "emax") && (
+                            <span className="text-[9px] font-black tracking-[0.2em] uppercase leading-none text-gmax animate-pulse">
+                              {form.gimmick === "emax" ? "ETERNAMAX" : "GIGANTAMAX"}
+                            </span>
+                          )}
+                          {form["special form"] && (
+                            <span className="text-[9px] font-bold tracking-[0.2em] uppercase leading-none text-ink opacity-60">
+                              {form["special form"]}
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Form Dots Selection Overlay */}
+                        {allForms.length > 1 && !isGimmickOnly && (
+                          <div className="absolute inset-y-0 right-3 flex items-center z-40 pointer-events-auto">
+                            <div className="flex flex-col gap-1.5 items-end justify-center">
                               {allForms.map((f, i) => {
-                                const isHovered = hoveredFormIndex === i;
                                 const isActive = i === currentFormIndex;
                                 const fIsGmax = f?.gimmick === "gmax" || f?.gimmick === "emax";
                                 return (
-                                  <div key={`form-p-${i}`} className="relative flex items-center justify-end group/form cursor-pointer select-none" onMouseEnter={() => setHoveredFormIndex(i)} onClick={() => handleFormSelect(i)}>
-                                    <AnimatePresence>
-                                      {isHovered && (
-                                        <motion.div initial={{ opacity: 0, x: 20, scale: 0.8 }} animate={{ opacity: 1, x: 0, scale: 1 }} exit={{ opacity: 0, x: 10, scale: 0.9 }} className="absolute right-full mr-8 bg-ink text-paper px-3 py-2 whitespace-nowrap shadow-2xl z-50 pointer-events-none italic border border-paper/10 text-[10px] font-mono font-bold uppercase tracking-[0.2em]">{f?.["special form"] || f?.name || "???"}</motion.div>
-                                      )}
-                                    </AnimatePresence>
-                                    <div className="w-12 h-5 flex items-center justify-end group-hover/selector:pr-1 transition-all">
-                                      <motion.div animate={{ width: (isActive ? 40 : 10) * (isHovered ? 2.5 : 1), height: (isActive ? 4 : 3), opacity: isActive || isHovered ? 1 : 0.4 }} className={`rounded-full origin-right ${isActive || isHovered ? (fIsGmax && viewMode === "gigantamax" ? "bg-gmax shadow-[0_0_8px_rgba(208,0,111,0.5)]" : "bg-ink") : "bg-ink/30"}`} />
-                                    </div>
-                                  </div>
+                                  <button 
+                                    key={`form-p-dots-${i}`} 
+                                    onClick={(e) => { e.stopPropagation(); handleFormSelect(i); }}
+                                    className="group/dot flex items-center gap-1.5 focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0"
+                                  >
+                                    <span className="text-[8px] font-bold tracking-wider font-mono uppercase opacity-0 group-hover/dot:opacity-100 transition-opacity bg-ink text-paper px-1 rounded pointer-events-none">
+                                      {f?.["special form"] || f?.name || "Form"}
+                                    </span>
+                                    <div 
+                                      className={`transition-all rounded-full ${
+                                        isActive 
+                                          ? `${fIsGmax && viewMode === "gigantamax" ? "bg-gmax w-4" : "bg-ink w-4"} h-1.5` 
+                                          : 'bg-ink/20 w-1.5 h-1.5 hover:bg-ink/40'
+                                      }`} 
+                                    />
+                                  </button>
                                 );
                               })}
                             </div>
                           </div>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Details Panel (Portrait) */}
-                    <div className="w-full px-6 py-8 pb-24 shrink-0 flex flex-col">
-                      <div className="flex flex-wrap gap-2 mb-8 min-w-0">
-                        {form.type.map((t, idx) => (
-                          <span key={`type-p-${t}-${idx}`} className={`flex items-center gap-2 font-mono text-[10px] font-black uppercase tracking-wider px-2.5 py-1 bg-transparent micro-label border max-w-full border-line text-zinc-900 dark:text-zinc-100`}>
-                            <img src={`${CLOUDFRONT_ASSETS_URL}/type-icons/${t.toLowerCase()}-type-icon.png`} alt={t} className="w-3.5 h-3.5 object-contain shrink-0" onError={(e) => (e.currentTarget.style.display = "none")} />
-                            <span className="truncate">{t}</span>
-                          </span>
-                        ))}
-                      </div>
-                      <section className="mb-12 space-y-4 min-w-0">
-                        <p className={`font-display text-xl font-black uppercase tracking-[0.3em] leading-tight break-words tracking-tight text-ink`}>{form.category} Pokémon</p>
-                        <div className="space-y-4">
-                          <span className="micro-label opacity-30 block">D3x Entry</span>
-                          <p className={`text-sm font-medium leading-relaxed italic border-l-[3px] pl-6 py-1 break-words border-line`}>"{form.entry}"</p>
-                        </div>
-                      </section>
-                      <div className="space-y-12 min-w-0">
-                        <section className={`grid grid-cols-2 gap-10 border-b pb-12 border-line`}>
-                          <div className="space-y-2 min-w-0">
-                            <span className="micro-label opacity-40">Height</span>
-                            <p className={`font-display font-bold text-3xl tracking-tighter ${isGigantamax ? 'text-gmax' : ''}`}>{(form.height / 100).toFixed(1)}{(isGigantamax || isMega) && "+"}<span className="text-xs ml-1 opacity-40">M</span></p>
-                          </div>
-                          <div className="space-y-2 min-w-0">
-                            <span className="micro-label opacity-40">Weight</span>
-                            <p className={`font-display font-bold text-3xl tracking-tighter ${isGigantamax ? 'text-gmax' : ''}`}>{form.weight === -1 ? "???" : form.weight}{form.weight !== -1 && <span className="text-xs ml-1 opacity-40">KG</span>}</p>
-                          </div>
-                        </section>
-                        <section className="space-y-6 min-w-0">
-                          <span className="micro-label opacity-40">Base Stats</span>
-                          <div className="space-y-3">
-                            <StatBar label="HP" value={stats.hp} />
-                            <StatBar label="ATK" value={stats.atk} />
-                            <StatBar label="DEF" value={stats.def} />
-                            <StatBar label="SP.ATK" value={stats["sp.atk"]} />
-                            <StatBar label="SP.DEF" value={stats["sp.def"]} />
-                            <StatBar label="SPEED" value={stats.speed} />
-                          </div>
-                        </section>
-                        {!isGimmick && !isGimmickOnly && (
-                          <section className={`space-y-6 pt-12 border-t min-w-0 border-line`}>
-                            <span className="micro-label opacity-40">Evolutionary Line</span>
-                            <div className="w-full flex justify-center py-4">
-                              <EvolutionChain indexData={indexData} shinyMode={shinyMode} currentId={Number(form.key) || detail["dex number"] + currentFormIndex / 100} onSelect={handleJumpToPokemon} />
-                            </div>
-                          </section>
                         )}
                       </div>
+
+                      {/* See More Details Button */}
+                      <button
+                        onClick={() => setIsExpanded(true)}
+                        className={`w-full py-4.5 text-center micro-label tracking-[0.2em] font-black uppercase text-xs border-t rounded-none transition-all active:scale-[0.98] cursor-pointer shrink-0 ${
+                          isGigantamax ? 'border-gmax text-gmax hover:bg-gmax hover:text-white' : 
+                          isMega ? 'border-mega text-mega hover:bg-mega hover:text-white' : 
+                          'border-line text-ink hover:bg-ink hover:text-paper bg-transparent'
+                        }`}
+                      >
+                        See More Details
+                      </button>
                     </div>
-                  </div>
+                  ) : (
+                    <div className="flex flex-col w-full h-auto">
+                      {/* Header */}
+                      <div className="px-8 py-6 space-y-1 shrink-0 mt-14">
+                        <span className={`font-display text-xl font-black tracking-tighter mb-2 block ${isGigantamax ? 'text-gmax' : isMega ? 'text-mega' : ''}`}>
+                          #{String(detail["dex number"]).padStart(4, "0")}
+                        </span>
+                        
+                        <div className="flex items-baseline gap-2 overflow-visible min-w-0 w-full">
+                          <Textfit 
+                            key={`name-p-exp-${id}-${currentFormIndex}-${renderSig}`}
+                            {...({
+                              mode: "single",
+                              max: 40, 
+                              min: 16,
+                              className: `font-display font-black tracking-tighter leading-[1.1] px-1 whitespace-nowrap w-full ${isGigantamax ? 'bg-gradient-to-b from-white from-0% via-white via-35% via-[#d0006f] via-55% to-[#d0006f] to-100% bg-clip-text text-transparent drop-shadow-[0_2px_4px_rgba(208,0,111,0.3)]' : 'text-ink'}`,
+                              children: form.name
+                            } as any)}
+                          />
+                        </div>
+                      </div>
+
+                      {/* Image */}
+                      <div className={`relative aspect-square flex flex-col items-center justify-center shrink-0 border-t border-b border-line ${
+                        isGigantamax ? 'bg-gmax-soft gmax-gradient' : 
+                        isMega ? 'bg-mega-soft mega-gradient' : 
+                        'shiny-gradient bg-white dark:bg-black/20'
+                      }`}>
+                        <div className="w-full h-full flex items-center justify-center p-8 relative">
+                          {imgLoading && !imgError && (
+                            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                              <div className={`w-10 h-10 border border-t-current rounded-full animate-spin ${isGigantamax ? 'text-gmax' : isMega ? 'text-mega' : 'text-ink'}`} />
+                            </div>
+                          )}
+                          {!imgError && !imgLoading && cachedImageUrl ? (
+                              <img
+                                src={cachedImageUrl}
+                                alt={form.name}
+                                referrerPolicy="no-referrer"
+                                className={`max-w-full max-h-full object-contain transition-opacity duration-300 opacity-100 ${
+                                  isGigantamax ? 'drop-shadow-[0_20px_60px_rgba(208,0,111,0.3)]' : 
+                                  isMega ? 'drop-shadow-[0_20px_60px_rgba(233,176,247,0.3)]' : 
+                                  'drop-shadow-[0_20px_60px_rgba(0,0,0,0.08)] dark:drop-shadow-[0_20px_60px_rgba(255,255,255,0.03)]'
+                                }`}
+                              />
+                          ) : !imgLoading && imgError ? (
+                            <div className="flex flex-col items-center gap-4 text-center opacity-20">
+                              <span className="font-display text-9xl font-black italic">?</span>
+                              <p className="micro-label tracking-[0.5em]">No Asset</p>
+                            </div>
+                          ) : null}
+                        </div>
+
+                        {/* Special Form / Gimmick text at the bottom-center of the image square */}
+                        <div className="absolute bottom-4 left-0 right-0 flex flex-col items-center justify-center gap-1 pointer-events-none z-30">
+                          {(form.gimmick === "gmax" || form.gimmick === "emax") && (
+                            <span className="text-[10px] font-black tracking-[0.2em] uppercase leading-none text-gmax animate-pulse">
+                              {form.gimmick === "emax" ? "ETERNAMAX" : "GIGANTAMAX"}
+                            </span>
+                          )}
+                          {form["special form"] && (
+                            <span className="text-[10px] font-bold tracking-[0.2em] uppercase leading-none text-ink opacity-60">
+                              {form["special form"]}
+                            </span>
+                          )}
+                        </div>
+
+                        {allForms.length > 1 && !isGimmickOnly && (
+                          <div className="absolute inset-0 pointer-events-none">
+                            <div 
+                              className="absolute top-1/2 -translate-y-1/2 right-0 flex flex-col items-end z-40 group/selector pointer-events-none"
+                              onMouseLeave={() => setHoveredFormIndex(null)}
+                            >
+                               <div className="flex flex-col gap-0.5 items-end max-h-[300px] min-w-[500px] overflow-y-auto no-scrollbar py-20 pr-6 pl-[300px] scroll-smooth pointer-events-auto">
+                                {allForms.map((f, i) => {
+                                  const isHovered = hoveredFormIndex === i;
+                                  const isActive = i === currentFormIndex;
+                                  const fIsGmax = f?.gimmick === "gmax" || f?.gimmick === "emax";
+                                  return (
+                                    <div key={`form-p-${i}`} className="relative flex items-center justify-end group/form cursor-pointer select-none" onMouseEnter={() => setHoveredFormIndex(i)} onClick={() => handleFormSelect(i)}>
+                                      <AnimatePresence>
+                                        {isHovered && (
+                                          <motion.div initial={{ opacity: 0, x: 20, scale: 0.8 }} animate={{ opacity: 1, x: 0, scale: 1 }} exit={{ opacity: 0, x: 10, scale: 0.9 }} className="absolute right-full mr-8 bg-ink text-paper px-3 py-2 whitespace-nowrap shadow-2xl z-50 pointer-events-none italic border border-paper/10 text-[10px] font-mono font-bold uppercase tracking-[0.2em]">{f?.["special form"] || f?.name || "???"}</motion.div>
+                                        )}
+                                      </AnimatePresence>
+                                      <div className="w-12 h-5 flex items-center justify-end group-hover/selector:pr-1 transition-all">
+                                        <motion.div animate={{ width: (isActive ? 40 : 10) * (isHovered ? 2.5 : 1), height: (isActive ? 4 : 3), opacity: isActive || isHovered ? 1 : 0.4 }} className={`rounded-full origin-right ${isActive || isHovered ? (fIsGmax && viewMode === "gigantamax" ? "bg-gmax shadow-[0_0_8px_rgba(208,0,111,0.5)]" : "bg-ink") : "bg-ink/30"}`} />
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Details Panel (Portrait) */}
+                      <div className="w-full px-6 py-8 pb-24 shrink-0 flex flex-col">
+                        <div className="flex flex-wrap gap-2 mb-8 min-w-0">
+                          {form.type.map((t, idx) => (
+                            <span key={`type-p-${t}-${idx}`} className={`flex items-center gap-2 font-mono text-[10px] font-black uppercase tracking-wider px-2.5 py-1 bg-transparent micro-label border max-w-full border-line text-zinc-900 dark:text-zinc-100`}>
+                              <img src={`${CLOUDFRONT_ASSETS_URL}/type-icons/${t.toLowerCase()}-type-icon.png`} alt={t} className="w-3.5 h-3.5 object-contain shrink-0" onError={(e) => (e.currentTarget.style.display = "none")} />
+                              <span className="truncate">{t}</span>
+                            </span>
+                          ))}
+                        </div>
+                        <section className="mb-12 space-y-4 min-w-0">
+                          <p className={`font-display text-xl font-black uppercase tracking-[0.3em] leading-tight break-words tracking-tight text-ink`}>{form.category} Pokémon</p>
+                          <div className="space-y-4">
+                            <span className="micro-label opacity-30 block">D3x Entry</span>
+                            <p className={`text-sm font-medium leading-relaxed italic border-l-[3px] pl-6 py-1 break-words border-line`}>"{form.entry}"</p>
+                          </div>
+                        </section>
+                        <div className="space-y-12 min-w-0">
+                          <section className={`grid grid-cols-2 gap-10 border-b pb-12 border-line`}>
+                            <div className="space-y-2 min-w-0">
+                              <span className="micro-label opacity-40">Height</span>
+                              <p className={`font-display font-bold text-3xl tracking-tighter ${isGigantamax ? 'text-gmax' : ''}`}>{(form.height / 100).toFixed(1)}{(isGigantamax || isMega) && "+"}<span className="text-xs ml-1 opacity-40">M</span></p>
+                            </div>
+                            <div className="space-y-2 min-w-0">
+                              <span className="micro-label opacity-40">Weight</span>
+                              <p className={`font-display font-bold text-3xl tracking-tighter ${isGigantamax ? 'text-gmax' : ''}`}>{form.weight === -1 ? "???" : form.weight}{form.weight !== -1 && <span className="text-xs ml-1 opacity-40">KG</span>}</p>
+                            </div>
+                          </section>
+                          <section className="space-y-6 min-w-0">
+                            <span className="micro-label opacity-40">Base Stats</span>
+                            <div className="space-y-3">
+                              <StatBar label="HP" value={stats.hp} />
+                              <StatBar label="ATK" value={stats.atk} />
+                              <StatBar label="DEF" value={stats.def} />
+                              <StatBar label="SP.ATK" value={stats["sp.atk"]} />
+                              <StatBar label="SP.DEF" value={stats["sp.def"]} />
+                              <StatBar label="SPEED" value={stats.speed} />
+                            </div>
+                          </section>
+                          {!isGimmick && !isGimmickOnly && (
+                            <section className={`space-y-6 pt-12 border-t min-w-0 border-line`}>
+                              <span className="micro-label opacity-40">Evolutionary Line</span>
+                              <div className="w-full flex justify-center py-4">
+                                <EvolutionChain indexData={indexData} shinyMode={shinyMode} currentId={Number(form.key) || detail["dex number"] + currentFormIndex / 100} onSelect={handleJumpToPokemon} />
+                              </div>
+                            </section>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )
                 ) : (
                   <>
                     {/* Image Area - Desktop */}
@@ -505,6 +666,21 @@ export default function PokemonModal({ initialId, initialFormIndex = 0, onClose,
                           </div>
                         ) : null}
                       </div>
+
+                      {/* Special Form / Gimmick text at the bottom-center of the image square */}
+                      <div className="absolute bottom-8 left-0 right-0 flex flex-col items-center justify-center gap-1.5 pointer-events-none z-30">
+                        {(form.gimmick === "gmax" || form.gimmick === "emax") && (
+                          <span className="text-xs font-black tracking-[0.2em] uppercase leading-none text-gmax animate-pulse">
+                            {form.gimmick === "emax" ? "ETERNAMAX" : "GIGANTAMAX"}
+                          </span>
+                        )}
+                        {form["special form"] && (
+                          <span className="text-xs font-bold tracking-[0.2em] uppercase leading-none text-ink opacity-60">
+                            {form["special form"]}
+                          </span>
+                        )}
+                      </div>
+
                       {allForms.length > 1 && !isGimmickOnly && (
                         <div className="absolute top-1/2 -translate-y-1/2 right-0 flex flex-col items-end z-40 group/selector pointer-events-none" onMouseLeave={() => setHoveredFormIndex(null)}>
                           <div className="flex flex-col gap-0.5 items-end max-h-[80vh] min-w-[500px] overflow-y-auto no-scrollbar py-20 pr-6 pl-[300px] scroll-smooth pointer-events-auto">
@@ -531,27 +707,15 @@ export default function PokemonModal({ initialId, initialFormIndex = 0, onClose,
                     >
                       <header className="mb-12">
                         <div className="flex flex-col gap-1">
-                          {(form.gimmick === "gmax" || form.gimmick === "emax") && (
-                            <div className="flex items-center gap-2 mb-1">
-                              <img src={`${CLOUDFRONT_ASSETS_URL}/gmax.png`} alt="G-Max" className="w-6 h-6 object-contain" onError={(e) => (e.currentTarget.style.display = "none")} />
-                              <span className="text-xs font-bold tracking-[0.2em] uppercase leading-none text-gmax">
-                                {form.gimmick === "emax" ? "ETERNAMAX" : "GIGANTAMAX"}
-                              </span>
-                            </div>
-                          )}
-                          <Textfit {...({ 
+                          <Textfit 
+                            key={`name-d-${id}-${currentFormIndex}-${renderSig}`}
+                            {...({ 
                             mode: "single", 
                             max: 80, 
                             min: 20, 
                             className: `font-display font-black tracking-tighter leading-[1.1] px-1 whitespace-nowrap ${isGigantamax ? 'bg-gradient-to-b from-white to-[#d0006f] bg-clip-text text-transparent drop-shadow-[0_4px_8px_rgba(208,0,111,0.3)]' : 'text-ink'}`, 
                             children: form.name 
                           } as any)} />
-                          {form["special form"] && (
-                            <div className="flex items-center gap-2 mt-1">
-                              <div className={`w-2 h-2 rounded-full bg-ink/10`} />
-                              <span className={`text-xs font-bold tracking-[0.2em] uppercase leading-none opacity-90`}>{form["special form"]}</span>
-                            </div>
-                          )}
                           <div className="flex flex-wrap gap-2 mt-3">
                              {form.type.map((t, idx) => (
                               <span key={`type-d-${t}-${idx}`} className={`flex items-center gap-2 font-mono text-[10px] font-black uppercase tracking-wider px-2.5 py-1.5 bg-transparent micro-label border border-line text-ink`}>
@@ -607,9 +771,13 @@ export default function PokemonModal({ initialId, initialFormIndex = 0, onClose,
             </div>
         </div>
 
-        {/* Archive Navigation PILL - Positioned below the box */}
+        {/* Archive Navigation PILL */}
         {gallery.length > 1 && (
-          <div className={`flex items-center bg-paper/90 backdrop-blur-md border rounded-full shadow-xl pointer-events-auto my-2 overflow-hidden border-line`}>
+          <div className={`${
+            isPortrait && isExpanded 
+              ? "fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex" 
+              : "flex my-2"
+          } items-center bg-paper/90 backdrop-blur-md border rounded-full shadow-xl pointer-events-auto overflow-hidden border-line`}>
             <button 
               disabled={currentIndex === 0}
               onClick={(e) => { e.stopPropagation(); handlePrev(); }}

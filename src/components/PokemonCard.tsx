@@ -133,6 +133,25 @@ export default function PokemonCard({
             <span className="text-[5px] sm:text-[6px] md:text-[7px] micro-label tracking-tighter mt-0.5 sm:mt-1 opacity-40">In-Progress</span>
           </div>
         )}
+
+        {/* Special Form / Gimmick text at the bottom of the card's image square */}
+        <div className="absolute bottom-1 left-0 right-0 flex flex-col items-center justify-center gap-0.5 pointer-events-none z-20">
+          {isGmaxMode && (
+            <span className="text-[6px] sm:text-[7px] md:text-[8px] font-black tracking-widest uppercase leading-none text-gmax whitespace-nowrap scale-[0.9] sm:scale-100">
+              G-MAX
+            </span>
+          )}
+          {isMegaMode && (
+            <span className="text-[6px] sm:text-[7px] md:text-[8px] font-black tracking-widest uppercase leading-none text-mega whitespace-nowrap scale-[0.9] sm:scale-100">
+              MEGA
+            </span>
+          )}
+          {specialForm && !isGmaxMode && !isMegaMode && (
+            <span className="text-[6px] sm:text-[7px] md:text-[8px] font-bold tracking-widest uppercase leading-none text-ink opacity-60 whitespace-nowrap max-w-[95%] truncate scale-[0.9] sm:scale-100">
+              {specialForm}
+            </span>
+          )}
+        </div>
       </div>
 
       {/* Hover Background - Subtle highlight */}
