@@ -42,10 +42,15 @@ export default function App() {
     const saved = localStorage.getItem("shinyMode");
     return saved ? JSON.parse(saved) : false;
   });
+  const [solidBg, setSolidBg] = useState(() => {
+    const saved = localStorage.getItem("solidBg");
+    return saved ? JSON.parse(saved) : false;
+  });
   const [darkMode, setDarkMode] = useState(() => {
     const saved = localStorage.getItem("darkMode");
     return saved ? JSON.parse(saved) : false;
   });
+  const isBgSolid = (darkMode && !shinyMode) || solidBg;
   const [lastDetailFetchTime, setLastDetailFetchTime] = useState(0);
   const [loadedImages, setLoadedImages] = useState<Record<number, Set<number>>>({});
   const [loadingCursor, setLoadingCursor] = useState(0);
@@ -158,6 +163,10 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem("shinyMode", JSON.stringify(shinyMode));
   }, [shinyMode]);
+
+  useEffect(() => {
+    localStorage.setItem("solidBg", JSON.stringify(solidBg));
+  }, [solidBg]);
 
   useEffect(() => {
     localStorage.setItem("darkMode", JSON.stringify(darkMode));
@@ -759,10 +768,9 @@ export default function App() {
         </div>
 
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-y-8 pt-8 border-t border-line">
-              <div className="flex items-center justify-between w-full md:w-auto md:justify-start md:gap-12">
-                {/* Core View Modes & Toggle */}
-                <div className="flex items-center gap-6">
-                  <div className={`flex items-center gap-4 bg-ink/5 p-1 rounded-full border transition-all ${viewMode === 'gigantamax' ? 'border-gmax/30 shadow-[0_0_15px_rgba(208,0,111,0.1)]' : viewMode === 'mega' ? 'border-mega/30 shadow-[0_0_15px_rgba(233,176,247,0.1)]' : 'border-line'}`}>
+              <div className="flex items-center justify-between w-full md:w-auto md:justify-start md:gap-12">                {/* Core View Modes & Toggle */}
+                <div className="flex flex-wrap items-center gap-4 sm:gap-6">
+                  <div className={`flex items-center gap-4 bg-ink/5 p-1 rounded-full border transition-all ${viewMode === 'gigantamax' ? 'border-gmax/30 shadow-[0_0_15px_rgba(208,0,111,0.15)]' : viewMode === 'mega' ? 'border-mega/30 shadow-[0_0_15px_rgba(233,176,247,0.1)]' : 'border-line'}`}>
                     <button 
                       onClick={() => setShinyMode(false)}
                       className={`px-4 py-1.5 cursor-pointer rounded-full micro-label transition-all ${!shinyMode ? (viewMode === 'gigantamax' ? "bg-gmax !text-white shadow-sm font-bold" : viewMode === 'mega' ? "bg-mega !text-white shadow-sm font-bold" : "bg-paper text-ink shadow-sm") : (viewMode === 'gigantamax' ? "text-gmax/60 hover:text-gmax" : viewMode === 'mega' ? "text-mega/60 hover:text-mega" : "opacity-40 hover:opacity-100")}`}
@@ -776,6 +784,21 @@ export default function App() {
                       Shiny
                     </button>
                   </div>
+
+                  <button 
+                    onClick={() => !(darkMode && !shinyMode) && setSolidBg(!solidBg)}
+                    disabled={darkMode && !shinyMode}
+                    className={`px-4 py-2 cursor-pointer rounded-full micro-label transition-all border ${
+                      darkMode && !shinyMode 
+                        ? "bg-ink/5 border-line opacity-50 cursor-not-allowed" 
+                        : (isBgSolid 
+                            ? (viewMode === 'gigantamax' ? "bg-gmax !text-white border-gmax/30 shadow-sm font-bold" : viewMode === 'mega' ? "bg-mega !text-white border-mega/30 shadow-sm font-bold" : "bg-paper text-ink border-line shadow-sm font-bold")
+                            : "bg-ink/5 border-transparent opacity-40 hover:opacity-100 font-bold"
+                          )
+                    }`}
+                  >
+                    {isBgSolid ? "Background: On" : "Background: Off"}
+                  </button>
                 </div>
 
                 {/* Theme Toggle - Mobile Only */}
@@ -1043,14 +1066,15 @@ export default function App() {
                       />
                     </div>
                   </div>
-                </div>
-                <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-px">
+                </div>                 <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-px">
                   {section.pokemon.map((pokemon) => (
                   <div key={`${pokemon.id}-${pokemon.matchedFormIndex}`} className="museum-cell">
                     <PokemonCard
                       pokemon={pokemon}
                       targetFormIndex={pokemon.matchedFormIndex}
                       shinyMode={shinyMode}
+                      solidBg={isBgSolid}
+                      darkMode={darkMode}
                       isGmaxMode={viewMode === 'gigantamax'}
                       isMegaMode={viewMode === 'mega'}
                       isSelected={selectedPokemonId === pokemon.id}
@@ -1074,6 +1098,8 @@ export default function App() {
                   pokemon={pokemon}
                   targetFormIndex={pokemon.matchedFormIndex}
                   shinyMode={shinyMode}
+                  solidBg={isBgSolid}
+                  darkMode={darkMode}
                   isGmaxMode={viewMode === 'gigantamax'}
                   isMegaMode={viewMode === 'mega'}
                   isSelected={selectedPokemonId === pokemon.id}
@@ -1340,6 +1366,25 @@ export default function App() {
                   Shiny
                 </button>
               </div>
+
+              <div className="hidden sm:block w-[1px] h-4 bg-line mx-1" />
+              <div className="block sm:hidden h-[1px] w-full bg-line px-4" />
+
+              {/* Solid BG Toggle */}
+              <button 
+                onClick={() => !(darkMode && !shinyMode) && setSolidBg(!solidBg)}
+                disabled={darkMode && !shinyMode}
+                className={`flex-1 sm:flex-none px-4 py-2 rounded-full micro-label text-center transition-all border ${
+                  darkMode && !shinyMode 
+                    ? "bg-ink/5 border-line opacity-50 cursor-not-allowed" 
+                    : (isBgSolid 
+                        ? (viewMode === 'gigantamax' ? "bg-gmax !text-white border-gmax/30 shadow-sm font-bold" : "bg-paper text-ink border-line shadow-sm font-bold") 
+                        : "bg-ink/5 border-transparent opacity-40 hover:opacity-100 font-bold"
+                      )
+                }`}
+              >
+                {isBgSolid ? "Background: On" : "Background: Off"}
+              </button>
             </div>
 
             {/* To-Top Toggle */}
@@ -1368,6 +1413,7 @@ export default function App() {
             }}
             indexData={indexData}
             shinyMode={shinyMode}
+            solidBg={isBgSolid}
             onImageLoad={trackImageLoad}
             filteredList={modalFilteredList}
             isGimmickOnly={viewMode !== "national"}

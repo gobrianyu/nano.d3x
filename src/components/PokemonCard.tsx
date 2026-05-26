@@ -12,6 +12,8 @@ interface PokemonCardProps {
   pokemon: PokemonIndexItem;
   targetFormIndex?: number;
   shinyMode: boolean;
+  solidBg?: boolean;
+  darkMode?: boolean;
   isGmaxMode?: boolean;
   isMegaMode?: boolean;
   isSelected?: boolean;
@@ -26,6 +28,8 @@ export default function PokemonCard({
   pokemon, 
   targetFormIndex = 0, 
   shinyMode, 
+  solidBg = false,
+  darkMode = false,
   isGmaxMode, 
   isMegaMode,
   isSelected, 
@@ -82,30 +86,14 @@ export default function PokemonCard({
     <motion.button
       ref={ref}
       onClick={onClick}
-      className={`group relative aspect-[5/3] w-full flex items-center p-2 sm:p-4 bg-transparent transition-all ring-2 cursor-pointer overflow-hidden z-10 
+      className={`group relative aspect-[5/3] w-full flex items-center p-0 bg-transparent transition-all ring-2 cursor-pointer overflow-hidden z-10 
         ${isSelected ? (isGmaxMode ? 'ring-gmax' : isMegaMode ? 'ring-mega' : 'ring-ink') : 'ring-transparent'} 
         ${isGmaxMode ? 'hover:ring-gmax gmax-border-pulse' : isMegaMode ? 'hover:ring-mega mega-border-pulse' : 'hover:ring-ink'}`}
     >
-      {/* Name - Background subtle text */}
-      <div className={`absolute left-2 sm:left-4 bottom-2 sm:bottom-3 micro-label transition-all pointer-events-none z-10 max-w-[60%] truncate
-        ${isGmaxMode ? '!text-gmax/40 group-hover:!text-gmax group-hover:opacity-100 font-bold' : 
-          isMegaMode ? '!text-mega/40 group-hover:!text-mega group-hover:opacity-100 font-bold' : 
-          'opacity-40 group-hover:opacity-100'} 
-        text-[7px] sm:text-[9px]`}>
-        {pokemonName}
-      </div>
-
-      {/* Dex ID - Top Right */}
-      <div className={`absolute top-2 sm:top-3 right-2 sm:right-4 micro-label transition-all origin-right z-10 
-        ${isGmaxMode ? '!text-gmax/40 group-hover:!text-gmax opacity-100 group-hover:scale-110 font-bold' : 
-          isMegaMode ? '!text-mega/40 group-hover:!text-mega opacity-100 group-hover:scale-110 font-bold' : 
-          'text-ink opacity-40 group-hover:opacity-100 group-hover:scale-110'}
-        text-[7px] sm:text-[9px]`}>
-        {String(pokemon.id).padStart(4, "0")}
-      </div>
-      
-      {/* Image - Left Centered */}
-      <div className="h-full aspect-square flex items-center justify-center relative z-10 shrink-0">
+      {/* Image - Left Centered, stretching 1:1 to top, left, bottom edges */}
+      <div className={`h-full aspect-square flex items-center justify-center relative z-10 shrink-0 transition-colors duration-200 ${
+        solidBg ? "bg-[#fcfcf9] dark:bg-[#e2e2dc]" : ""
+      }`}>
         {/* Theme Gradient Background centered on image */}
         {isGmaxMode && (
           <div className="opacity-50 absolute inset-[-30%] gmax-gradient pointer-events-none z-[-1]" />
@@ -117,7 +105,7 @@ export default function PokemonCard({
           <>
             {isLoading && (
               <div className="absolute inset-0 flex items-center justify-center">
-                <div className="w-3 h-3 sm:w-4 sm:h-4 border border-ink/10 border-t-ink rounded-full animate-spin" />
+                <div className={`w-3 h-3 sm:w-4 sm:h-4 border rounded-full animate-spin ${solidBg ? "border-[#121212]/15 border-t-[#121212]" : "border-ink/15 border-t-ink"}`} />
               </div>
             )}
             <img
@@ -128,30 +116,38 @@ export default function PokemonCard({
             />
           </>
         ) : (
-          <div className="flex flex-col items-center justify-center opacity-40 group-hover:opacity-80 transition-opacity">
-            <HelpCircle className="opacity-20 w-6 h-6 sm:w-8 sm:h-8 md:w-10 md:h-10" strokeWidth={1} />
-            <span className="text-[5px] sm:text-[6px] md:text-[7px] micro-label tracking-tighter mt-0.5 sm:mt-1 opacity-40">In-Progress</span>
+          <div className={`flex flex-col items-center justify-center transition-all duration-200
+            ${solidBg 
+              ? "text-[#121212]/30 group-hover:text-[#121212]/70" 
+              : "text-ink/40 group-hover:text-ink/80"}`}
+          >
+            <HelpCircle className="w-6 h-6 sm:w-8 sm:h-8 md:w-10 md:h-10" strokeWidth={1} />
+            <span className="text-[5px] sm:text-[6px] md:text-[7px] tracking-tighter mt-0.5 sm:mt-1 font-mono uppercase tracking-[0.25em] font-bold leading-tight select-none">
+              In-Progress
+            </span>
           </div>
         )}
+      </div>
 
-        {/* Special Form / Gimmick text at the bottom of the card's image square */}
-        <div className="absolute bottom-1 left-0 right-0 flex flex-col items-center justify-center gap-0.5 pointer-events-none z-20">
-          {isGmaxMode && (
-            <span className="text-[6px] sm:text-[7px] md:text-[8px] font-black tracking-widest uppercase leading-none text-gmax whitespace-nowrap scale-[0.9] sm:scale-100">
-              G-MAX
-            </span>
-          )}
-          {isMegaMode && (
-            <span className="text-[6px] sm:text-[7px] md:text-[8px] font-black tracking-widest uppercase leading-none text-mega whitespace-nowrap scale-[0.9] sm:scale-100">
-              MEGA
-            </span>
-          )}
-          {specialForm && !isGmaxMode && !isMegaMode && (
-            <span className="text-[6px] sm:text-[7px] md:text-[8px] font-bold tracking-widest uppercase leading-none text-ink opacity-60 whitespace-nowrap max-w-[95%] truncate scale-[0.9] sm:scale-100">
-              {specialForm}
-            </span>
-          )}
-        </div>
+      {/* Dex ID - Top Right */}
+      <div className={`absolute top-2 sm:top-3 right-2 sm:right-3 micro-label transition-all origin-right z-10 
+        ${isGmaxMode ? '!text-gmax/40 group-hover:!text-gmax opacity-100 font-bold' : 
+          isMegaMode ? '!text-mega/40 group-hover:!text-mega opacity-100 font-bold' : 
+          'text-ink opacity-40 group-hover:opacity-100'}
+        text-[7.5px] sm:text-[9.5px]`}>
+        #{String(pokemon.id).padStart(4, "0")}
+      </div>
+
+      {/* Name - Bottom Left (overlapping the bottom-left of the image section) */}
+      <div className={`absolute left-2 sm:left-3 bottom-1.5 sm:bottom-2 micro-label transition-all pointer-events-none z-20 max-w-[55%] truncate
+        ${isGmaxMode ? '!text-gmax/40 group-hover:!text-gmax group-hover:opacity-100 font-bold' : 
+          isMegaMode ? '!text-mega/40 group-hover:!text-mega group-hover:opacity-100 font-bold' : 
+          (solidBg && darkMode
+            ? '!text-[#121212]/40 group-hover:!text-[#121212]' 
+            : '!text-ink/40 group-hover:!text-ink'
+          )} 
+        text-[7.5px] sm:text-[9.5px]`}>
+        {pokemonName}
       </div>
 
       {/* Hover Background - Subtle highlight */}

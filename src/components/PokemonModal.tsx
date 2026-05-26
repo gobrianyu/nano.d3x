@@ -21,13 +21,14 @@ interface PokemonModalProps {
   onClose: () => void;
   indexData: PokemonIndexItem[];
   shinyMode: boolean;
+  solidBg?: boolean;
   onImageLoad?: (id: number, formIndex: number) => void;
   filteredList: GalleryItem[];
   isGimmickOnly?: boolean;
   viewMode?: string;
 }
 
-export default function PokemonModal({ initialId, initialFormIndex = 0, onClose, indexData, shinyMode, onImageLoad, filteredList, isGimmickOnly = false, viewMode }: PokemonModalProps) {
+export default function PokemonModal({ initialId, initialFormIndex = 0, onClose, indexData, shinyMode, solidBg = false, onImageLoad, filteredList, isGimmickOnly = false, viewMode }: PokemonModalProps) {
   // Gallery state: initialized from the filtered grid, but can grow with evolution jumps
   const [gallery, setGallery] = useState<GalleryItem[]>(() => {
     // Ensure the initial item is in the gallery
@@ -360,10 +361,12 @@ export default function PokemonModal({ initialId, initialFormIndex = 0, onClose,
                   !isExpanded ? (
                     <div className="flex flex-col w-full h-auto p-0 select-none shrink-0">
                       {/* Image Area */}
-                      <div className={`relative w-full aspect-square flex items-center justify-center overflow-hidden shrink-0 ${
-                        isGigantamax ? 'bg-gmax-soft gmax-gradient' : 
-                        isMega ? 'bg-mega-soft mega-gradient' : 
-                        'shiny-gradient bg-white dark:bg-black/20'
+                      <div className={`relative w-full aspect-square flex items-center justify-center overflow-hidden shrink-0 transition-colors duration-200 ${
+                        solidBg ? 'bg-[#fcfcf9] dark:bg-[#e2e2dc]' : (
+                          isGigantamax ? 'bg-gmax-soft gmax-gradient' : 
+                          isMega ? 'bg-mega-soft mega-gradient' : 
+                          'shiny-gradient bg-white dark:bg-black/20'
+                        )
                       }`}>
                         {/* Pokémon Name (Top Left inside Image area) */}
                         <div className="absolute top-4 left-4 right-24 flex flex-col gap-0.5 overflow-visible min-w-0 pointer-events-auto z-30">
@@ -373,7 +376,7 @@ export default function PokemonModal({ initialId, initialFormIndex = 0, onClose,
                               mode: "single",
                               max: 22, 
                               min: 14,
-                              className: `font-display font-black tracking-tighter leading-tight ${isGigantamax ? 'bg-gradient-to-b from-white from-0% via-white via-35% via-[#d0006f] via-55% to-[#d0006f] to-100% bg-clip-text text-transparent drop-shadow-[0_2px_4px_rgba(208,0,111,0.3)]' : 'text-ink'}`,
+                              className: `font-display font-black tracking-tighter leading-tight ${isGigantamax ? 'bg-gradient-to-b from-white from-0% via-white via-35% via-[#d0006f] via-55% to-[#d0006f] to-100% bg-clip-text text-transparent drop-shadow-[0_2px_4px_rgba(208,0,111,0.3)]' : (solidBg ? 'text-[#121212]' : 'text-ink')}`,
                               children: form.name
                             } as any)}
                           />
@@ -392,7 +395,7 @@ export default function PokemonModal({ initialId, initialFormIndex = 0, onClose,
                         <div className="w-full h-full flex items-center justify-center pt-16 pb-12 px-6 relative">
                           {imgLoading && !imgError && (
                             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                              <div className={`w-8 h-8 border border-t-current rounded-full animate-spin ${isGigantamax ? 'text-gmax' : isMega ? 'text-mega' : 'text-ink'}`} />
+                              <div className={`w-8 h-8 border border-t-current rounded-full animate-spin ${isGigantamax ? 'text-gmax' : isMega ? 'text-mega' : (solidBg ? 'text-[#121212]' : 'text-ink')}`} />
                             </div>
                           )}
                           {!imgError && !imgLoading && cachedImageUrl ? (
@@ -422,7 +425,7 @@ export default function PokemonModal({ initialId, initialFormIndex = 0, onClose,
                             </span>
                           )}
                           {form["special form"] && (
-                            <span className="text-[9px] font-bold tracking-[0.2em] uppercase leading-none text-ink opacity-60">
+                            <span className={`text-[9px] font-bold tracking-[0.2em] uppercase leading-none ${solidBg ? 'text-[#121212]/60' : 'text-ink opacity-60'}`}>
                               {form["special form"]}
                             </span>
                           )}
@@ -494,15 +497,17 @@ export default function PokemonModal({ initialId, initialFormIndex = 0, onClose,
                       </div>
 
                       {/* Image */}
-                      <div className={`relative aspect-square flex flex-col items-center justify-center shrink-0 border-t border-b border-line ${
-                        isGigantamax ? 'bg-gmax-soft gmax-gradient' : 
-                        isMega ? 'bg-mega-soft mega-gradient' : 
-                        'shiny-gradient bg-white dark:bg-black/20'
+                      <div className={`relative aspect-square flex flex-col items-center justify-center shrink-0 border-t border-b border-line transition-colors duration-200 ${
+                        solidBg ? 'bg-[#fcfcf9] dark:bg-[#e2e2dc]' : (
+                          isGigantamax ? 'bg-gmax-soft gmax-gradient' : 
+                          isMega ? 'bg-mega-soft mega-gradient' : 
+                          'shiny-gradient bg-white dark:bg-black/20'
+                        )
                       }`}>
                         <div className="w-full h-full flex items-center justify-center p-8 relative">
                           {imgLoading && !imgError && (
                             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                              <div className={`w-10 h-10 border border-t-current rounded-full animate-spin ${isGigantamax ? 'text-gmax' : isMega ? 'text-mega' : 'text-ink'}`} />
+                              <div className={`w-10 h-10 border border-t-current rounded-full animate-spin ${isGigantamax ? 'text-gmax' : isMega ? 'text-mega' : (solidBg ? 'text-[#121212]' : 'text-ink')}`} />
                             </div>
                           )}
                           {!imgError && !imgLoading && cachedImageUrl ? (
@@ -532,7 +537,7 @@ export default function PokemonModal({ initialId, initialFormIndex = 0, onClose,
                             </span>
                           )}
                           {form["special form"] && (
-                            <span className="text-[10px] font-bold tracking-[0.2em] uppercase leading-none text-ink opacity-60">
+                            <span className={`text-[10px] font-bold tracking-[0.2em] uppercase leading-none ${solidBg ? 'text-[#121212]/60' : 'text-ink opacity-60'}`}>
                               {form["special form"]}
                             </span>
                           )}
@@ -622,26 +627,28 @@ export default function PokemonModal({ initialId, initialFormIndex = 0, onClose,
                 ) : (
                   <>
                     {/* Image Area - Desktop */}
-                    <div className={`relative aspect-square h-full flex flex-col items-center justify-center shrink-0 border-r border-line ${
-                      isGigantamax ? 'bg-gmax-soft gmax-gradient' : 
-                      isMega ? 'bg-mega-soft mega-gradient' : 
-                      'shiny-gradient bg-white dark:bg-black/20'
+                    <div className={`relative aspect-square h-full flex flex-col items-center justify-center shrink-0 border-r border-line transition-colors duration-200 ${
+                      solidBg ? 'bg-[#fcfcf9] dark:bg-[#e2e2dc]' : (
+                        isGigantamax ? 'bg-gmax-soft gmax-gradient' : 
+                        isMega ? 'bg-mega-soft mega-gradient' : 
+                        'shiny-gradient bg-white dark:bg-black/20'
+                      )
                     }`}>
                       <div className="absolute top-8 left-8 right-8 flex justify-between items-start z-10 pointer-events-none">
                         <div className="flex flex-col gap-1">
-                          <span className="micro-label">Dex ID</span>
-                          <span className={`font-display text-4xl font-black tracking-tighter ${isGigantamax ? 'text-gmax' : isMega ? 'text-mega' : ''}`}>#{String(detail["dex number"]).padStart(4, "0")}</span>
+                          <span className={`micro-label ${solidBg ? '!text-[#121212]/50' : ''}`}>Dex ID</span>
+                          <span className={`font-display text-4xl font-black tracking-tighter ${isGigantamax ? 'text-gmax' : isMega ? 'text-mega' : (solidBg ? 'text-[#121212]' : 'text-ink')}`}>#{String(detail["dex number"]).padStart(4, "0")}</span>
                         </div>
                       </div>
                       {detail.gendered && !isGimmick && (
                         <div className="absolute top-8 right-8 z-10 flex gap-4 pointer-events-auto">
                            {(detail["male:female ratio"] !== 0) && (
-                             <button onClick={() => detail["male:female ratio"] !== 100 && setGender("m")} className={`micro-label transition-all flex items-center gap-2 ${gender === "m" ? "text-ink" : "opacity-20"}`}>
+                             <button onClick={() => detail["male:female ratio"] !== 100 && setGender("m")} className={`micro-label transition-all flex items-center gap-2 ${solidBg ? (gender === "m" ? "text-[#121212]" : "text-[#121212]/30") : (gender === "m" ? "text-ink" : "opacity-20")}`}>
                                <Mars size={12} /> M
                              </button>
                            )}
                            {(detail["male:female ratio"] !== 100) && (
-                             <button onClick={() => detail["male:female ratio"] !== 0 && setGender("f")} className={`micro-label transition-all flex items-center gap-2 ${gender === "f" ? "text-ink" : "opacity-20"}`}>
+                             <button onClick={() => detail["male:female ratio"] !== 0 && setGender("f")} className={`micro-label transition-all flex items-center gap-2 ${solidBg ? (gender === "f" ? "text-[#121212]" : "text-[#121212]/30") : (gender === "f" ? "text-ink" : "opacity-20")}`}>
                                <Venus size={12} /> F
                              </button>
                            )}
@@ -650,7 +657,7 @@ export default function PokemonModal({ initialId, initialFormIndex = 0, onClose,
                       <div className="w-full h-full flex items-center justify-center p-8 relative">
                         {imgLoading && !imgError && (
                           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                            <div className={`w-10 h-10 border border-t-current rounded-full animate-spin ${isGigantamax ? 'text-gmax' : isMega ? 'text-mega' : 'text-ink'}`} />
+                            <div className={`w-10 h-10 border border-t-current rounded-full animate-spin ${isGigantamax ? 'text-gmax' : isMega ? 'text-mega' : (solidBg ? 'text-[#121212]' : 'text-ink')}`} />
                           </div>
                         )}
                         {!imgError && !imgLoading && cachedImageUrl ? (
@@ -675,7 +682,7 @@ export default function PokemonModal({ initialId, initialFormIndex = 0, onClose,
                           </span>
                         )}
                         {form["special form"] && (
-                          <span className="text-xs font-bold tracking-[0.2em] uppercase leading-none text-ink opacity-60">
+                          <span className={`text-xs font-bold tracking-[0.2em] uppercase leading-none ${solidBg ? 'text-[#121212]/60' : 'text-ink opacity-60'}`}>
                             {form["special form"]}
                           </span>
                         )}
