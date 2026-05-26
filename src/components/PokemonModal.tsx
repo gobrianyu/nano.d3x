@@ -382,8 +382,55 @@ export default function PokemonModal({ initialId, initialFormIndex = 0, onClose,
                           />
                         </div>
 
-                        {/* Top Right Close Button */}
-                        <div className="absolute top-4 right-4 z-50 pointer-events-auto">
+                        {/* Top Right Close Button & Gender Controls */}
+                        <div className="absolute top-4 right-4 z-50 pointer-events-auto flex items-center gap-3">
+                          {detail && detail.gendered && !isGimmick && (
+                            <div className={`flex rounded-sm p-0.5 border gap-0.5 items-center select-none mr-1
+                              ${solidBg 
+                                ? 'bg-[#121212]/5 border-[#121212]/10' 
+                                : 'bg-paper/40 dark:bg-[#121212]/30 backdrop-blur-sm border-line'
+                              }`}
+                            >
+                              {(detail["male:female ratio"] !== 0) && (
+                                <button 
+                                  onClick={() => detail["male:female ratio"] !== 100 && setGender("m")} 
+                                  className={`px-2 py-0.5 text-[9px] uppercase font-mono tracking-wider font-bold transition-all duration-200 cursor-pointer flex items-center gap-1 rounded-sm
+                                    ${gender === "m"
+                                      ? (solidBg 
+                                          ? 'bg-[#121212] !text-[#fcfcf9] shadow-xs' 
+                                          : 'bg-ink !text-paper shadow-xs'
+                                        )
+                                      : (solidBg
+                                          ? 'text-[#121212]/40 hover:text-[#121212] hover:bg-[#121212]/5'
+                                          : 'text-ink/40 hover:text-ink hover:bg-ink/5'
+                                        )
+                                    }`}
+                                >
+                                  <Mars size={11} className="shrink-0" />
+                                  <span>M</span>
+                                </button>
+                              )}
+                              {(detail["male:female ratio"] !== 100) && (
+                                <button 
+                                  onClick={() => detail["male:female ratio"] !== 0 && setGender("f")} 
+                                  className={`px-2 py-0.5 text-[9px] uppercase font-mono tracking-wider font-bold transition-all duration-200 cursor-pointer flex items-center gap-1 rounded-sm
+                                    ${gender === "f"
+                                      ? (solidBg 
+                                          ? 'bg-[#121212] !text-[#fcfcf9] shadow-xs' 
+                                          : 'bg-ink !text-paper shadow-xs'
+                                        )
+                                      : (solidBg
+                                          ? 'text-[#121212]/40 hover:text-[#121212] hover:bg-[#121212]/5'
+                                          : 'text-ink/40 hover:text-ink hover:bg-ink/5'
+                                        )
+                                    }`}
+                                >
+                                  <Venus size={11} className="shrink-0" />
+                                  <span>F</span>
+                                </button>
+                              )}
+                            </div>
+                          )}
                           <button 
                             onClick={onClose}
                             className="cursor-pointer bg-paper hover:bg-ink hover:text-paper text-[10px] font-mono font-black tracking-[0.15em] uppercase text-ink border border-line px-2.5 py-1.5 transition-all shadow-sm rounded-none"
@@ -504,6 +551,53 @@ export default function PokemonModal({ initialId, initialFormIndex = 0, onClose,
                           'shiny-gradient bg-white dark:bg-black/20'
                         )
                       }`}>
+                        {detail && detail.gendered && !isGimmick && (
+                          <div className={`absolute top-4 right-4 z-10 flex rounded-sm p-0.5 border gap-0.5 items-center select-none pointer-events-auto
+                            ${solidBg 
+                              ? 'bg-[#121212]/5 border-[#121212]/10' 
+                              : 'bg-paper/40 dark:bg-[#121212]/30 backdrop-blur-sm border-line'
+                            }`}
+                          >
+                             {(detail["male:female ratio"] !== 0) && (
+                               <button 
+                                 onClick={() => detail["male:female ratio"] !== 100 && setGender("m")} 
+                                 className={`px-2 py-0.5 text-[9px] sm:text-[10px] uppercase font-mono tracking-wider font-bold transition-all duration-200 cursor-pointer flex items-center gap-1 rounded-sm
+                                   ${gender === "m"
+                                     ? (solidBg 
+                                         ? 'bg-[#121212] !text-[#fcfcf9] shadow-sm' 
+                                         : 'bg-ink !text-paper shadow-sm'
+                                       )
+                                     : (solidBg
+                                         ? 'text-[#121212]/40 hover:text-[#121212] hover:bg-[#121212]/5'
+                                         : 'text-ink/40 hover:text-ink hover:bg-ink/5'
+                                       )
+                                   }`}
+                               >
+                                 <Mars size={12} className="shrink-0" />
+                                 <span>M</span>
+                               </button>
+                             )}
+                             {(detail["male:female ratio"] !== 100) && (
+                               <button 
+                                 onClick={() => detail["male:female ratio"] !== 0 && setGender("f")} 
+                                 className={`px-2 py-0.5 text-[9px] sm:text-[10px] uppercase font-mono tracking-wider font-bold transition-all duration-200 cursor-pointer flex items-center gap-1 rounded-sm
+                                   ${gender === "f"
+                                     ? (solidBg 
+                                         ? 'bg-[#121212] !text-[#fcfcf9] shadow-sm' 
+                                         : 'bg-ink !text-paper shadow-sm'
+                                       )
+                                     : (solidBg
+                                         ? 'text-[#121212]/40 hover:text-[#121212] hover:bg-[#121212]/5'
+                                         : 'text-ink/40 hover:text-ink hover:bg-ink/5'
+                                       )
+                                   }`}
+                               >
+                                 <Venus size={12} className="shrink-0" />
+                                 <span>F</span>
+                               </button>
+                             )}
+                          </div>
+                        )}
                         <div className="w-full h-full flex items-center justify-center p-8 relative">
                           {imgLoading && !imgError && (
                             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
@@ -641,15 +735,48 @@ export default function PokemonModal({ initialId, initialFormIndex = 0, onClose,
                         </div>
                       </div>
                       {detail.gendered && !isGimmick && (
-                        <div className="absolute top-8 right-8 z-10 flex gap-4 pointer-events-auto">
+                        <div className={`absolute top-8 right-8 z-10 flex rounded-sm p-0.5 border gap-0.5 items-center select-none pointer-events-auto
+                          ${solidBg 
+                            ? 'bg-[#121212]/5 border-[#121212]/10' 
+                            : 'bg-paper/40 dark:bg-[#121212]/30 backdrop-blur-sm border-line'
+                          }`}
+                        >
                            {(detail["male:female ratio"] !== 0) && (
-                             <button onClick={() => detail["male:female ratio"] !== 100 && setGender("m")} className={`micro-label transition-all flex items-center gap-2 ${solidBg ? (gender === "m" ? "text-[#121212]" : "text-[#121212]/30") : (gender === "m" ? "text-ink" : "opacity-20")}`}>
-                               <Mars size={12} /> M
+                             <button 
+                               onClick={() => detail["male:female ratio"] !== 100 && setGender("m")} 
+                               className={`px-2 py-0.5 text-xs uppercase font-mono tracking-wider font-bold transition-all duration-200 cursor-pointer flex items-center gap-1 rounded-sm
+                                 ${gender === "m"
+                                   ? (solidBg 
+                                       ? 'bg-[#121212] !text-[#fcfcf9] shadow-sm' 
+                                       : 'bg-ink !text-paper shadow-sm'
+                                     )
+                                   : (solidBg
+                                       ? 'text-[#121212]/40 hover:text-[#121212] hover:bg-[#121212]/5'
+                                       : 'text-ink/40 hover:text-ink hover:bg-ink/5'
+                                     )
+                                 }`}
+                             >
+                               <Mars size={12} className="shrink-0" />
+                               <span>M</span>
                              </button>
                            )}
                            {(detail["male:female ratio"] !== 100) && (
-                             <button onClick={() => detail["male:female ratio"] !== 0 && setGender("f")} className={`micro-label transition-all flex items-center gap-2 ${solidBg ? (gender === "f" ? "text-[#121212]" : "text-[#121212]/30") : (gender === "f" ? "text-ink" : "opacity-20")}`}>
-                               <Venus size={12} /> F
+                             <button 
+                               onClick={() => detail["male:female ratio"] !== 0 && setGender("f")} 
+                               className={`px-2 py-0.5 text-xs uppercase font-mono tracking-wider font-bold transition-all duration-200 cursor-pointer flex items-center gap-1 rounded-sm
+                                 ${gender === "f"
+                                   ? (solidBg 
+                                       ? 'bg-[#121212] !text-[#fcfcf9] shadow-sm' 
+                                       : 'bg-ink !text-paper shadow-sm'
+                                     )
+                                   : (solidBg
+                                       ? 'text-[#121212]/40 hover:text-[#121212] hover:bg-[#121212]/5'
+                                       : 'text-ink/40 hover:text-ink hover:bg-ink/5'
+                                     )
+                                 }`}
+                             >
+                               <Venus size={12} className="shrink-0" />
+                               <span>F</span>
                              </button>
                            )}
                         </div>
