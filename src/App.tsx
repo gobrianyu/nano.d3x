@@ -368,10 +368,13 @@ export default function App() {
             
             // Check if current form image is already in cache or has been loaded by UI
             const gender = "m";
-            const imageKey = `image asset ${gender}${shinyMode ? " shiny" : ""}` as keyof PokemonForm;
-            const fallbackImage = shinyMode ? p.thumbnail_shiny : p.thumbnail;
-            const url = gf?.[imageKey] ? `${BASE_IMAGE_URL}/${gf[imageKey]}` : `${BASE_IMAGE_URL}/${fallbackImage}`;
-            const isRegisteredInCache = imageCacheManager.get(url) !== undefined && imageCacheManager.get(url) !== 'FAILED';
+            const classicKey = `image asset ${gender}` as keyof PokemonForm;
+            const shinyKey = `image asset ${gender} shiny` as keyof PokemonForm;
+            const classicUrl = gf?.[classicKey] ? `${BASE_IMAGE_URL}/${gf[classicKey]}` : `${BASE_IMAGE_URL}/${p.thumbnail}`;
+            const shinyUrl = gf?.[shinyKey] ? `${BASE_IMAGE_URL}/${gf[shinyKey]}` : `${BASE_IMAGE_URL}/${p.thumbnail_shiny}`;
+            const isRegisteredInCache = 
+              (imageCacheManager.get(classicUrl) !== undefined && imageCacheManager.get(classicUrl) !== 'FAILED') ||
+              (imageCacheManager.get(shinyUrl) !== undefined && imageCacheManager.get(shinyUrl) !== 'FAILED');
 
             const isRegistered = isRegisteredInCache || (loadedImages[p.id]?.has(formIdx)) || false;
             
@@ -430,10 +433,13 @@ export default function App() {
             
             // Proactive check in cache
             const gender = "m";
-            const imageKey = `image asset ${gender}${shinyMode ? " shiny" : ""}` as keyof PokemonForm;
-            const fallbackImage = shinyMode ? p.thumbnail_shiny : p.thumbnail;
-            const url = f?.[imageKey] ? `${BASE_IMAGE_URL}/${f[imageKey]}` : `${BASE_IMAGE_URL}/${fallbackImage}`;
-            const isRegisteredInCache = imageCacheManager.get(url) !== undefined && imageCacheManager.get(url) !== 'FAILED';
+            const classicKey = `image asset ${gender}` as keyof PokemonForm;
+            const shinyKey = `image asset ${gender} shiny` as keyof PokemonForm;
+            const classicUrl = f?.[classicKey] ? `${BASE_IMAGE_URL}/${f[classicKey]}` : `${BASE_IMAGE_URL}/${p.thumbnail}`;
+            const shinyUrl = f?.[shinyKey] ? `${BASE_IMAGE_URL}/${f[shinyKey]}` : `${BASE_IMAGE_URL}/${p.thumbnail_shiny}`;
+            const isRegisteredInCache = 
+              (imageCacheManager.get(classicUrl) !== undefined && imageCacheManager.get(classicUrl) !== 'FAILED') ||
+              (imageCacheManager.get(shinyUrl) !== undefined && imageCacheManager.get(shinyUrl) !== 'FAILED');
 
             if (isRegisteredInCache || loadedImages[p.id]?.has(fIdx)) {
               formsNum++;
@@ -473,10 +479,13 @@ export default function App() {
           ...(detail?.forms || []), 
           ...(detail?.["gimmick forms"] || [])
         ][matchedFormIndex];
-        const imageKey = `image asset ${gender}${shinyMode ? " shiny" : ""}` as keyof PokemonForm;
-        const fallbackImage = shinyMode ? p.thumbnail_shiny : p.thumbnail;
-        const url = formAtIdx?.[imageKey] ? `${BASE_IMAGE_URL}/${formAtIdx[imageKey]}` : `${BASE_IMAGE_URL}/${fallbackImage}`;
-        const isRegisteredInCache = imageCacheManager.get(url) !== undefined && imageCacheManager.get(url) !== 'FAILED';
+        const classicKey = `image asset ${gender}` as keyof PokemonForm;
+        const shinyKey = `image asset ${gender} shiny` as keyof PokemonForm;
+        const classicUrl = formAtIdx?.[classicKey] ? `${BASE_IMAGE_URL}/${formAtIdx[classicKey]}` : `${BASE_IMAGE_URL}/${p.thumbnail}`;
+        const shinyUrl = formAtIdx?.[shinyKey] ? `${BASE_IMAGE_URL}/${formAtIdx[shinyKey]}` : `${BASE_IMAGE_URL}/${p.thumbnail_shiny}`;
+        const isRegisteredInCache = 
+          (imageCacheManager.get(classicUrl) !== undefined && imageCacheManager.get(classicUrl) !== 'FAILED') ||
+          (imageCacheManager.get(shinyUrl) !== undefined && imageCacheManager.get(shinyUrl) !== 'FAILED');
 
         if (isRegistered && (isRegisteredInCache || loadedImages[p.id]?.has(matchedFormIndex))) {
           speciesNum++;
